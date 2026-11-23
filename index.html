@@ -9,9 +9,17 @@
  generated procedurally at runtime (CanvasTexture / vertex colours / WebAudio).
  No external models, images, textures, fonts or audio files.
 
- ONLY EXTERNAL DEPENDENCY: three.js r160 (ES modules from unpkg via import map)
+ MAIN DEPENDENCY: three.js r160 (ES modules from unpkg via import map)
    https://unpkg.com/three@0.160.0/build/three.module.js
    + its bundled addons: RoundedBoxGeometry, BufferGeometryUtils, RoomEnvironment
+
+ ONLINE MULTIPLAYER HELPER: PeerJS 1.5.4 (WebRTC signalling via the free PeerJS
+ cloud broker), loaded lazily only when you tap "Host online" or "Join":
+   https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js
+   Host = authoritative simulation; guests stream inputs and render snapshots.
+   Public STUN only (Google, Cloudflare) — no TURN relay is bundled, so some
+   strict mobile-carrier NATs may not connect (see NET_CFG.ice, section 29).
+   "Play solo" works with no network at all once three.js is cached.
 
  HOW TO PLAY
    Gather beans / cups / milk from the pantry, feed the grinder, brew espresso,
@@ -19,11 +27,13 @@
    on the orange "unlock pads" to expand the café. No rush: calm, well-timed
    service (machines in their green heat band, customers served before they get
    impatient) earns PERFECT quality, bigger tips and reputation.
-   Touch: drag anywhere in your zone = floating joystick; ACTION button drops
-   your top item. Tap a station to walk there and open its card / upgrade.
-   Two fingers (1P) = orbit / zoom camera.
-   Keys: P1 WASD + Space · P2 Arrows + Enter · P3 IJKL + U · P4 Numpad 8456 + 0
-         1-4 theme · C camera · Esc menu
+   Touch: drag anywhere = floating joystick; DROP button drops your top item.
+   Tap a station to walk there and open its card / upgrade.
+   Two fingers = orbit / zoom camera. A short How-to-play shows on first launch.
+   Online: 1-4 baristas, each on their own device. Host gets a 5-letter room
+   code + ?room=CODE link; lobby with names, colours, ready, co-op / versus.
+   Keys: WASD / arrows move · Space / E / Enter drop · 1-4 theme · C camera ·
+         Esc menu
 ================================================================================
 -->
 <html lang="en">
@@ -194,6 +204,75 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);overscroll
   .tt .logo{font-size:34px;}
   .sgrid{grid-template-columns:repeat(6,1fr);} .sbox .v{font-size:18px;}
 }
+
+/* ---- online: player chips, lobby ---- */
+#plist{position:absolute;left:calc(var(--sal) + var(--u));right:calc(var(--sar) + var(--u));display:flex;flex-wrap:wrap;gap:4px;pointer-events:none;}
+#hud:not(.online) #plist{display:none;}
+.pc{display:flex;align-items:center;gap:5px;background:var(--panel);border:1px solid var(--line);border-radius:3px;padding:3px 7px;font-size:9px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap;}
+.pc i{width:8px;height:8px;border-radius:2px;flex:none;}
+.pc .s{color:var(--mute);font-weight:700;margin-left:2px;}
+.pc.me{border-color:var(--fg);}
+.pc.away{opacity:.5;}
+.pc.net i{background:var(--ok);border-radius:50%;}
+.pc.net.bad i{background:var(--warn);}
+.inp{width:100%;font-family:var(--font);font-size:16px;font-weight:700;color:var(--fg);background:var(--chip);border:1px solid var(--line);border-radius:3px;padding:10px 12px;margin-top:6px;outline:none;pointer-events:auto;user-select:text;-webkit-user-select:text;}
+.inp:focus{border-color:var(--accent);}
+.inp.code{font-size:30px;letter-spacing:.32em;text-transform:uppercase;text-align:center;font-weight:900;}
+.inp.sm{font-size:11px;padding:0 8px;margin:0;min-height:44px;color:var(--mute);}
+.lbcode{font-size:46px;font-weight:900;letter-spacing:.22em;line-height:1;margin-top:4px;color:var(--fg);}
+.slots{display:grid;gap:3px;margin-top:6px;}
+.slot{display:grid;grid-template-columns:20px 10px 1fr auto;gap:8px;align-items:center;padding:7px 9px;border:1px solid var(--line);border-radius:3px;background:var(--panel);font-size:13px;}
+.slot i{width:10px;height:10px;border-radius:2px;}
+.slot .ix{font-size:9px;font-weight:800;color:var(--mute);letter-spacing:.1em;}
+.slot.empty{opacity:.45;border-style:dashed;}
+.slot.off{opacity:.55;}
+.slot.me{border-color:var(--fg);}
+.k.st{min-height:14px;}
+/* ---- how to play ---- */
+#tut{background:color-mix(in srgb,var(--bg) 82%,transparent);z-index:30;padding:calc(var(--sat) + 12px) calc(var(--sar) + 12px) calc(var(--sab) + 12px) calc(var(--sal) + 12px);}
+.tcard{width:min(440px,100%);}
+.thead{display:flex;justify-content:space-between;align-items:center;}
+.tskip{min-height:34px!important;padding:0 14px;font-size:11px;letter-spacing:.12em;}
+.tgrid{display:grid;grid-template-columns:1fr;gap:10px;margin-top:8px;}
+.tart{min-height:150px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--chip);border:1px solid var(--line);border-radius:3px;padding:12px;color:var(--fg);}
+.ttext h2{margin-top:6px;}
+.ttext p{font-size:14px;line-height:1.5;margin-top:8px;color:var(--fg);font-weight:500;}
+.tflow{display:flex;align-items:center;gap:8px;color:var(--mute);}
+.tbox{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 10px;border:1px solid var(--line);background:var(--panel);border-radius:3px;font-size:10px;font-weight:800;letter-spacing:.1em;color:var(--fg);}
+.tbox.acc{background:var(--accent);color:var(--accent-fg);border-color:var(--accent);}
+.tbox.big{font-size:22px;padding:8px 14px;}
+.tbox small{font-size:8px;}
+.tstack{display:flex;flex-direction:column-reverse;align-items:center;gap:0;}
+.tstack img{margin-top:-8px;}
+.theat{display:flex;width:80%;height:8px;gap:2px;margin-top:12px;}
+.theat i{flex:1;border-radius:1px;}
+.tpad{width:150px;height:110px;border:3px dashed var(--accent);border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;transform:perspective(300px) rotateX(38deg);background:color-mix(in srgb,var(--accent) 12%,transparent);}
+.tpad b{font-size:34px;color:var(--accent);font-weight:900;}
+.tpad small{font-size:8px;font-weight:800;letter-spacing:.12em;color:var(--fg);}
+.tcalm{text-align:center;}
+.tcalm b{display:block;font-size:52px;font-weight:900;color:var(--accent);letter-spacing:-.03em;line-height:1;}
+.tbar{display:flex;gap:3px;margin-top:8px;justify-content:center;}
+.tbar i{width:14px;height:6px;background:var(--accent);border-radius:1px;}
+.tbar i.off{background:var(--line);}
+.tthemes{display:grid;grid-template-columns:repeat(4,46px);gap:6px;}
+.tthemes div{height:46px;border:1px solid;border-radius:3px;position:relative;display:flex;align-items:flex-end;padding:4px;font-weight:900;font-size:13px;}
+.tthemes i{position:absolute;top:5px;left:5px;width:14px;height:5px;border-radius:1px;}
+.tplayers{display:flex;gap:6px;margin-top:12px;}
+.tplayers i{width:22px;height:22px;border-radius:50%;}
+.tdots{display:flex;gap:4px;margin-top:12px;}
+.tdots i{flex:1;height:3px;background:var(--line);border-radius:1px;}
+.tdots i.past{background:var(--fg);}
+.tdots i.on{background:var(--accent);}
+@media (orientation:landscape) and (max-height:520px){
+  .tcard{width:min(680px,100%);padding:12px 14px;}
+  .tgrid{grid-template-columns:1fr 1.15fr;align-items:center;}
+  .tart{min-height:170px;}
+  .ttext p{font-size:13px;}
+  .lbcode{font-size:34px;}
+  .card.lb .slot{padding:5px 8px;font-size:12px;}
+  .card.lb .inp{padding:7px 10px;}
+  .card.lb .inp.code{font-size:24px;}
+}
 </style>
 <script type="importmap">
 { "imports": {
@@ -222,6 +301,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);overscroll
       </div>
     </div>
     <div id="goal"><span class="gk">GOAL</span><span id="goalTxt">Pick up beans at the pantry</span><span class="gp num" id="goalProg"></span></div>
+    <div id="plist"></div>
     <div id="orders"></div>
     <div id="side">
       <div class="rs" id="res"></div>
@@ -234,6 +314,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);overscroll
   <div id="title" class="ov"></div>
   <div id="panel" class="ov dim hidden"></div>
   <div id="summary" class="ov dim hidden"></div>
+  <div id="tut" class="ov hidden"></div>
   <div id="fade"></div>
 </div>
 <script type="module">
@@ -452,6 +533,8 @@ const THEMES = [
 let THEME = THEMES[0];
 const PLAYER_COLORS = ['#ff6a13', '#2f7bff', '#16b86a', '#a259ff'];
 const PLAYER_NAMES = ['P1', 'P2', 'P3', 'P4'];
+// online state (filled in by section 29); declared early so every system can ask who 'me' is
+const NET = { role: 'solo', me: 0, inGame: false, applying: false, screen: null };
 
 // themed materials (shared). roughness/metalness tuned per role.
 const MAT = {};
@@ -1510,7 +1593,11 @@ function baristaLook(i) {
   return { skin: SKINS[[0, 2, 1, 3][i]], hair: HAIRS[[0, 2, 4, 1][i]], shirt: '#fbfbfa', pants: '#26272a', apron: pc, hat: pc, hatBrim: shade(pc, -.25),
     shoe: '#1d1d1d', sole: '#ffffff', w: 1, sleeve: false, scale: 1.12 };
 }
-function customerLook() {
+function customerLook(seed) { // deterministic from a seed, so every device builds the same guest
+  const s0 = SEED; if (seed) SEED = seed;
+  const L = customerLook0(); SEED = s0; return L;
+}
+function customerLook0() {
   const styles = ['bowl', 'bun', 'long', 'beanie', 'cap', 'bowl'];
   const st = pick(styles);
   return { skin: pick(SKINS), hair: pick(HAIRS), shirt: pick(SHIRTS), pants: pick(PANTS), apron: null, style: st,
@@ -1549,8 +1636,8 @@ const producerOf = (t) => t === 'latte' ? ['steamer'] : t === 'americano' ? ['wa
 // 13  PLAYERS (baristas)
 // =============================================================================
 class Player {
-  constructor(i) {
-    this.i = i; this.color = PLAYER_COLORS[i];
+  constructor(i, name) {
+    this.i = i; this.color = PLAYER_COLORS[i]; this.name = (name || PLAYER_NAMES[i]).slice(0, 10); this.away = false;
     this.ch = new Character(baristaLook(i));
     const sp = [[-1.5, -4.0], [1.5, -4.0], [-3.5, -3.2], [3.5, -3.2]][i];
     this.ch.pos.set(sp[0], 0, sp[1]); this.ch.yaw = Math.PI;
@@ -1562,10 +1649,12 @@ class Player {
     ring.rotation.x = -Math.PI / 2; ring.position.y = .02; ring.renderOrder = 3; this.ch.root.add(ring); this.ring = ring;
     const disc = new THREE.Mesh(new THREE.CircleGeometry(.42, 40), new THREE.MeshBasicMaterial({ color: this.color, transparent: true, opacity: .18, depthWrite: false }));
     disc.rotation.x = -Math.PI / 2; disc.position.y = .018; disc.renderOrder = 2; this.ch.root.add(disc);
-    this.tag = makeCanvasSprite(128, 64, .62, (g, w, h) => {
-      g.fillStyle = this.color; g.beginPath(); g.roundRect(8, 4, w - 16, h - 22, 10); g.fill();
+    this.tag = makeCanvasSprite(256, 64, 1.24, (g, w, h) => {
+      const txt = (this.away ? '⏸ ' : '') + this.name.toUpperCase();
+      g.font = `800 30px ${FONT}`; const tw = Math.min(w - 20, Math.max(84, g.measureText(txt).width + 34));
+      g.fillStyle = this.away ? '#8a8a86' : this.color; g.beginPath(); g.roundRect((w - tw) / 2, 4, tw, h - 22, 10); g.fill();
       g.beginPath(); g.moveTo(w / 2 - 10, h - 19); g.lineTo(w / 2 + 10, h - 19); g.lineTo(w / 2, h - 6); g.fill();
-      g.fillStyle = '#fff'; g.font = `800 30px ${FONT}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(PLAYER_NAMES[i], w / 2, (h - 18) / 2 + 3);
+      g.fillStyle = '#fff'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(txt, w / 2, (h - 18) / 2 + 3);
     });
     this.maxTag = makeCanvasSprite(128, 48, .5, (g, w, h) => {
       g.fillStyle = '#111'; g.beginPath(); g.roundRect(4, 4, w - 8, h - 8, 8); g.fill();
@@ -1580,14 +1669,9 @@ class Player {
     const y = e ? e.cy || 0 : 0, hk = Math.pow(y / 1.2, 1.4);
     v.x += this.sway.x * hk; v.z += this.sway.y * hk; v.y += y;
   }
-  update(dt) {
+  update(dt) { this.move(dt); this.visuals(dt); this.interact(dt); }
+  move(dt) { // integrate input → velocity → position (host sim, and client-side prediction of your own barista)
     const c = this.ch;
-    // stack heights + sway spring (lags behind movement)
-    let y = 0; for (const e of this.pile.items) { e.cy = y; y += ITEM[e.t].h; }
-    const tx = -this.vx * .06, tz = -this.vz * .06;
-    this.swayV.x += ((tx - this.sway.x) * 60 - this.swayV.x * 7) * dt; this.swayV.y += ((tz - this.sway.y) * 60 - this.swayV.y * 7) * dt;
-    this.sway.x += this.swayV.x * dt; this.sway.y += this.swayV.y * dt;
-    // movement
     let ix = this.ix, iz = this.iz;
     const im = Math.hypot(ix, iz);
     if (im > .05) this.target = null;
@@ -1600,6 +1684,15 @@ class Player {
     this.vx = damp(this.vx, tvx, 14, dt); this.vz = damp(this.vz, tvz, 14, dt);
     c.pos.x += this.vx * dt; c.pos.z += this.vz * dt;
     collide(c.pos, .34);
+  }
+  setName(n) { n = (n || PLAYER_NAMES[this.i]).slice(0, 10); if (n !== this.name) { this.name = n; this.tag.userData.redraw(); } }
+  setAway(a) { if (a !== this.away) { this.away = a; this.tag.userData.redraw(); } }
+  visuals(dt) { // stack, sway, facing, walk cycle and indicators (runs on every device)
+    const c = this.ch;
+    let y = 0; for (const e of this.pile.items) { e.cy = y; y += ITEM[e.t].h; }
+    const tx = -this.vx * .06, tz = -this.vz * .06;
+    this.swayV.x += ((tx - this.sway.x) * 60 - this.swayV.x * 7) * dt; this.swayV.y += ((tz - this.sway.y) * 60 - this.swayV.y * 7) * dt;
+    this.sway.x += this.swayV.x * dt; this.sway.y += this.swayV.y * dt;
     const spd = Math.hypot(this.vx, this.vz);
     if (spd > .3) { const ty = Math.atan2(this.vx, this.vz); let d = ty - c.yaw; d = Math.atan2(Math.sin(d), Math.cos(d)); c.yaw += d * Math.min(1, dt * 14); }
     c.carrying = this.pile.items.length > 0;
@@ -1608,12 +1701,11 @@ class Player {
     if (spd > 2 && (c.phase % .5) < .06 && !this._fs) { this._fs = true; PFX.puff(c.pos.x, .05, c.pos.z, 1, .5); } else if ((c.phase % .5) > .1) this._fs = false;
     // indicators
     const full = this.pile.items.length >= this.cap;
-    this.tag.visible = G.nPlayers > 1;
+    this.tag.visible = G.players.length > 1;
     this.tag.position.set(c.pos.x, 2.45 + Math.sin(clock.elapsedTime * 3 + this.i) * .05 + c.mesh.position.y, c.pos.z);
     this.maxTag.visible = full;
     if (full) { c.handPos(_v1, y + .3); this.maxTag.position.copy(_v1); }
     this.ring.scale.setScalar(1 + Math.sin(clock.elapsedTime * 4 + this.i) * .04);
-    this.interact(dt);
   }
   interact(dt) {
     const p = this.ch.pos, P = this.pile;
@@ -1686,7 +1778,7 @@ class Player {
     }
   }
   action() { // manual drop: force the top item into the nearest accepting station, else serve / bin it
-    const P = this.pile; if (!P.items.length) { HUD.flash(`P${this.i + 1}: hands empty`); return; }
+    const P = this.pile; if (!P.items.length) { { if (NET.role === 'solo' || this.i === NET.me) HUD.flash('Hands empty'); }; return; }
     const p = this.ch.pos, e = P.items[P.items.length - 1];
     let best = null, bd = 2.4;
     for (const s of STATIONS) { if (!s.unlocked) continue; const d = Math.hypot(p.x - s.zone.x, p.z - s.zone.z); if (d < bd && stationAccepts(s, e.t, true)) { bd = d; best = s; } }
@@ -1750,20 +1842,18 @@ function stationSpeed(s) {
 }
 function updateStation(s, dt) {
   if (!s.unlocked) return;
-  if (s.building) { s.building -= dt; const k = 1 - Math.max(0, s.building) / .7; s.group.scale.setScalar(Math.max(.01, backOut(Math.min(1, k)))); if (s.building <= 0) { s.building = 0; s.group.scale.setScalar(1); } }
-  const P = s.parts;
-  if (s.kind === 'source') { s.state = s.out.items.length ? 'STOCK ' + s.out.items.length : 'EMPTY'; return; }
+  if (s.kind === 'source') { s.state = s.out.items.length ? 'STOCK ' + s.out.items.length : 'EMPTY'; animStation(s, dt, false); return; }
   if (s.kind === 'producer') {
     if (s.out.items.length < s.out.cap) { s.busy = true; s.prog += dt / s.time; if (s.prog >= 1) { s.prog = 0; s.out.add(s.outT, 1, _v1.set(s.x, CT + .9, -1.2)); s.made++; } s.state = 'BAKING'; }
     else { s.busy = false; s.state = 'FULL'; }
-    return;
+    animStation(s, dt, false); return;
   }
   const heats = s.heatOn;
   if (heats) {
-    if (s.over > 0) { s.over -= dt; s.heat = Math.max(.5, s.heat - dt * .1); s.state = 'COOLDOWN'; if (s.over <= 0) toast(`${s.title} READY AGAIN`); return; }
+    if (s.over > 0) { s.over -= dt; s.heat = Math.max(.5, s.heat - dt * .1); s.state = 'COOLDOWN'; if (s.over <= 0) toast(`${s.title} READY AGAIN`); animStation(s, dt, false); return; }
     const hm = G.heatMul * (1 - .3 * G.upg.brew);
     if (s.busy) s.heat += .034 * hm * dt; else s.heat += (.45 - s.heat) * Math.min(1, dt * (s.heat < .45 ? .14 : .06));
-    if (s.heat >= 1) { s.heat = 1; s.over = 5; s.busy = false; s.prog = 0; toast(`${s.title} OVERHEATED — NO RUSH`, 'warn'); SFX.buzz(); PFX.steam(s.x, CT + .8, BZ + .2, 20, 1.5); G.calm = 0; return; }
+    if (s.heat >= 1) { s.heat = 1; s.over = 5; s.busy = false; s.prog = 0; toast(`${s.title} OVERHEATED — NO RUSH`, 'warn'); SFX.buzz(); PFX.steam(s.x, CT + .8, BZ + .2, 20, 1.5); G.calm = 0; animStation(s, dt, false); return; }
   }
   if (!s.busy) {
     let ok = s.out.items.length < s.out.cap;
@@ -1790,7 +1880,18 @@ function updateStation(s, dt) {
     }
   }
   s.state = s.busy ? ({ grinder: 'GRINDING', esp1: 'BREWING', esp2: 'BREWING', steamer: 'STEAMING', water: 'POURING' }[s.id]) : s.out.items.length ? 'READY' : (heats && s.heat < .35 ? 'HEATING' : 'IDLE');
-  // part animation
+  animStation(s, dt, false);
+}
+function animStation(s, dt, remote) { // visual-only part animation (clients run just this; the host sim drives the numbers)
+  if (s.building) { s.building -= dt; const k = 1 - Math.max(0, s.building) / .7; s.group.scale.setScalar(Math.max(.01, backOut(Math.min(1, k)))); if (s.building <= 0) { s.building = 0; s.group.scale.setScalar(1); } }
+  const P = s.parts;
+  if (!P || s.kind === 'source' || s.kind === 'producer') return;
+  if (remote && s.busy) {
+    s.steamT = (s.steamT || 0) - dt;
+    if ((s.id === 'esp1' || s.id === 'esp2' || s.id === 'steamer' || s.id === 'water') && s.steamT < 0) { s.steamT = .08; PFX.steam(s.x + (s.id === 'steamer' ? .27 : (rnd() - .5) * .5), CT + .45, BZ + .3, 1, .6); }
+    if (s.id === 'grinder' && rnd() < dt * 20) PFX.puff(s.x, CT + .1, BZ + .3, 1, .25, '#5a3a22');
+    s.shake = .5;
+  }
   s.shake = Math.max(0, s.shake - dt);
   if (P.dial) P.dial.rotation.z -= dt * (s.busy ? 14 : 0);
   if (P.fill) P.fill.scale.y = clamp(.15 + s.inputs.beans.items.length / 6 * .85, .15, 1);
@@ -1806,8 +1907,9 @@ function updateStation(s, dt) {
 // 16  CUSTOMERS
 // =============================================================================
 class Customer {
-  constructor() {
-    this.ch = new Character(customerLook());
+  constructor(seed) {
+    this.seed = seed || (1 + Math.floor(Math.random() * 2147483000));
+    this.ch = new Character(customerLook(this.seed));
     const fromRight = rnd() < .6;
     this.ch.pos.set(fromRight ? 21 : -21, 0, 8.4); this.ch.yaw = fromRight ? -Math.PI / 2 : Math.PI / 2;
     this.pile = new Pile(9, (k, v, e) => { this.ch.handPos(v); v.y += (e && e.cy) || 0; });
@@ -1875,15 +1977,22 @@ class Customer {
       this.sitT -= dt;
       if (this.sitT < 0 || (!G.open && this.sitT < 6)) { this.seat.busy = null; this.state = 'leave'; this.path = this.seat.leave.concat([[3.2, 4.6], [3.2, 6.6], [3.2, 8.6], [rnd() < .5 ? -22 : 22, 8.6]]);
         if (rnd() < .5) { const tip = Math.round(1 + G.rep * .6); addCash(tip, p); DS.tips += tip; floatText(p.x, 2.4, p.z, '+$' + tip + ' TABLE TIP', THEME.ui.accent); } }
-    } else c.sit = damp(c.sit, 0, 10, dt);
-    c.carrying = this.pile.items.length > 0 && c.sit < .5;
-    c.update(dt, spd, 1.9);
+    }
     // patience
     const waiting = this.state === 'walk' || this.state === 'queue';
     if (waiting && this.slot >= 0 && this.slot <= 7) {
       this.pat -= dt / this.patMax * (G.peakMul > 1 ? 1.15 : 1) * (G.tutorial && DS.served === 0 ? .4 : 1);
-      if (this.pat <= 0) { customerLost(this); return; }
+      if (this.pat <= 0) { customerLost(this); }
     }
+    this.visuals(dt, spd);
+  }
+  visuals(dt, spd) {
+    const c = this.ch, p = c.pos;
+    if (this.state === 'sit' && NET.role === 'client') c.sit = damp(c.sit, 1, 8, dt); else if (this.state !== 'sit') c.sit = damp(c.sit, 0, 10, dt);
+    let y = 0; for (const e of this.pile.items) { e.cy = y; y += ITEM[e.t].h; }
+    c.carrying = this.pile.items.length > 0 && c.sit < .5;
+    c.update(dt, spd, 1.9);
+    const waiting = this.state === 'walk' || this.state === 'queue';
     const showB = waiting && this.slot >= 0 && this.slot <= 3 && this.need.length;
     this.bubble.visible = !!showB; this.gauge.visible = waiting && this.slot >= 0 && this.slot <= 7;
     if (this.gauge.visible) {
@@ -2043,6 +2152,7 @@ function endDay() {
   const over = G.rep < 1 || (red && G.debtDays >= 1);
   G.debtDays = red ? G.debtDays + 1 : 0;
   UI.summary({ rent, earned, goal, met, over, red, swept });
+  if (NET.role === 'host') NET.sendSummary({ rent, earned, goal, met, over, red, swept });
   SFX.jingle(met && !over);
 }
 function updateGame(dt) {
@@ -2053,7 +2163,7 @@ function updateGame(dt) {
     G.spawnT -= dt;
     if (G.spawnT <= 0) {
       spawnCustomer();
-      const rate = (4.4 + 1.5 * G.day + (G.unlocked.has('seating') ? 1.2 : 0) + (G.unlocked.has('lounge') ? 1.8 : 0)) * (.55 + G.rep * .12) * G.peakMul * (G.nPlayers > 1 ? 1 + (G.nPlayers - 1) * .45 : 1);
+      const rate = (4.4 + 1.5 * G.day + (G.unlocked.has('seating') ? 1.2 : 0) + (G.unlocked.has('lounge') ? 1.8 : 0)) * (.55 + G.rep * .12) * G.peakMul * (G.players.length > 1 ? 1 + (G.players.length - 1) * .45 : 1);
       G.spawnT = (60 / rate) * rr(.65, 1.35);
       if (G.tutorial && G.day === 1 && DS.served === 0 && G.queue.length >= 1) G.spawnT = Math.max(G.spawnT, 14);
     }
@@ -2076,8 +2186,9 @@ function updateGame(dt) {
     const c = G.customers[i]; c.update(dt);
     if (c.state === 'gone') { c.dispose(); G.customers.splice(i, 1); }
   }
-  for (const id in MODULES) { const m = MODULES[id]; if (m.userData.build > 0) { m.userData.build -= dt; const k = 1 - Math.max(0, m.userData.build) / .8; m.scale.setScalar(Math.max(.01, backOut(Math.min(1, k)))); } }
+  animModules(dt);
 }
+function animModules(dt) { for (const id in MODULES) { const m = MODULES[id]; if (m.userData.build > 0) { m.userData.build -= dt; const k = 1 - Math.max(0, m.userData.build) / .8; m.scale.setScalar(Math.max(.01, backOut(Math.min(1, k)))); } } }
 function separatePlayers() {
   const ps = G.players;
   for (let i = 0; i < ps.length; i++) for (let j = i + 1; j < ps.length; j++) {
@@ -2160,6 +2271,8 @@ for (let i = 0; i < 16; i++) {
 }
 let ftHead = 0;
 function floatText(x, y, z, txt, color = '#111', big = false) {
+  if (NET.applying) return;
+  if (NET.role === 'host' && NET.inGame) NET.fx('f', [+x.toFixed(2), +y.toFixed(2), +z.toFixed(2), txt, color, big]);
   const s = FT[ftHead = (ftHead + 1) % FT.length];
   s.userData.redraw(txt, color, big); s.position.set(x, y, z); s.userData.life = 1.5; s.userData.y0 = y; s.visible = true; s.material.opacity = 1;
 }
@@ -2254,61 +2367,30 @@ function updateCamera(dt) {
 // 20  INPUT — multi-touch joysticks per player zone, keys, taps, orbit
 // =============================================================================
 const INPUT = { ptr: new Map(), keys: new Set(), zones: [], gesture: null };
-const KEYMAP = [
-  { u: ['KeyW'], d: ['KeyS'], l: ['KeyA'], r: ['KeyD'], a: ['Space', 'KeyE'] },
-  { u: ['ArrowUp'], d: ['ArrowDown'], l: ['ArrowLeft'], r: ['ArrowRight'], a: ['Enter', 'ShiftRight'] },
-  { u: ['KeyI'], d: ['KeyK'], l: ['KeyJ'], r: ['KeyL'], a: ['KeyU', 'KeyO'] },
-  { u: ['Numpad8'], d: ['Numpad5'], l: ['Numpad4'], r: ['Numpad6'], a: ['Numpad0', 'NumpadEnter'] },
-];
-function zoneRects() {
-  const W = innerWidth, H = innerHeight, n = G.nPlayers, port = H > W, R = [];
-  if (n === 1) R.push([0, 0, W, H]);
-  else if (n === 2) { if (port) R.push([0, H / 2, W, H / 2], [0, 0, W, H / 2]); else R.push([0, 0, W / 2, H], [W / 2, 0, W / 2, H]); }
-  else { R.push([0, H / 2, W / 2, H / 2], [W / 2, H / 2, W / 2, H / 2]); if (n === 3) R.push([0, 0, W, H / 2]); else R.push([0, 0, W / 2, H / 2], [W / 2, 0, W / 2, H / 2]); }
-  return R;
-}
+// one barista per device: one floating joystick + one action button (online players each use their own phone)
+const KEYS = { u: ['KeyW', 'ArrowUp'], d: ['KeyS', 'ArrowDown'], l: ['KeyA', 'ArrowLeft'], r: ['KeyD', 'ArrowRight'], a: ['Space', 'KeyE', 'Enter'] };
+const myPlayer = () => G.players[NET.me] || G.players[0];
 function buildZones() {
   const root = $('zones'); root.innerHTML = ''; INPUT.zones = [];
-  const R = zoneRects(), n = G.nPlayers;
-  R.forEach((r, i) => {
-    const z = document.createElement('div'); z.className = 'zone' + (n > 1 ? ' multi' : '');
-    Object.assign(z.style, { left: r[0] + 'px', top: r[1] + 'px', width: r[2] + 'px', height: r[3] + 'px' });
-    const top = r[1] < 1 && n > 1 && (n > 2 || innerHeight > innerWidth), col = PLAYER_COLORS[i];
-    const sb = 'calc(var(--sab) + 18px)', stp = 'calc(var(--sat) + 18px)';
-    z.innerHTML = `<div class="zb"></div><div class="joy idle"><div class="kn" style="background:${col}"></div></div>
-      <button class="act" style="background:${col}"><small>↓</small>DROP</button>
-      <div class="ztag ${n > 1 ? '' : 'hidden'}"><i style="background:${col}"></i><span>${PLAYER_NAMES[i]}</span><span class="zs num">0</span></div>`;
-    root.appendChild(z);
-    const joy = z.querySelector('.joy'), act = z.querySelector('.act'), tag = z.querySelector('.ztag');
-    // resting joystick + action placement (outer corners, thumbs reach)
-    const W = innerWidth, H = innerHeight, full = r[2] > W * .75, left = full || r[0] < W / 2 - 1, isTop = n > 1 && r[1] < 1 && r[3] < H - 1;
-    const mp = n > 1, js = mp ? 46 : 56;
-    let rest, ax, ay;
-    if (!mp) { rest = { x: r[2] * .5, y: r[3] - (H > W ? 130 : 96) }; }
-    else {
-      const ry = isTop ? r[3] * .64 : r[3] - 74;
-      rest = { x: left ? 74 : r[2] - 74, y: ry };
-      if (full && isTop) rest.x = 74;
-    }
-    rest.y = Math.max(js + 8, rest.y);
-    joy.style.width = joy.style.height = js * 2 + 'px'; joy.style.margin = `-${js}px 0 0 -${js}px`;
-    joy.style.left = rest.x + 'px'; joy.style.top = rest.y + 'px';
-    const as = mp ? 56 : 68; act.style.width = act.style.height = as + 'px';
-    if (!mp) { act.style.right = 'calc(var(--sar) + 22px)'; act.style.bottom = H > W ? 'calc(var(--sab) + 96px)' : 'calc(var(--sab) + 20px)'; }
-    else {
-      ax = full && isTop ? r[2] - 74 - as / 2 : left ? rest.x + js + 22 : rest.x - js - 22 - as; ay = rest.y - as / 2;
-      act.style.left = ax + 'px'; act.style.top = ay + 'px';
-    }
-    if (left) { tag.style.left = Math.max(8, rest.x - js) + 'px'; } else { tag.style.right = Math.max(8, r[2] - rest.x - js) + 'px'; }
-    tag.style.top = (isTop ? rest.y + js + 6 : rest.y - js - 34) + 'px';
-    act.addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); AUDIO.unlock(); act.classList.add('press'); const p = G.players[i]; if (p && G.state === 'play') p.action(); });
-    const up = () => act.classList.remove('press'); act.addEventListener('pointerup', up); act.addEventListener('pointercancel', up); act.addEventListener('pointerleave', up);
-    INPUT.zones.push({ r, el: z, joy, kn: joy.firstElementChild, rest, act, tag, ptr: null, vx: 0, vy: 0, ox: 0, oy: 0 });
-  });
-  if (G.state !== 'play') $('zones').classList.add('hidden'); else $('zones').classList.remove('hidden');
+  const W = innerWidth, H = innerHeight, r = [0, 0, W, H], col = PLAYER_COLORS[NET.me] || PLAYER_COLORS[0];
+  const z = document.createElement('div'); z.className = 'zone';
+  Object.assign(z.style, { left: '0px', top: '0px', width: W + 'px', height: H + 'px' });
+  z.innerHTML = `<div class="zb"></div><div class="joy idle"><div class="kn" style="background:${col}"></div></div>
+    <button class="act" style="background:${col}"><small>↓</small>DROP</button>`;
+  root.appendChild(z);
+  const joy = z.querySelector('.joy'), act = z.querySelector('.act'), js = 56, as = 68;
+  const rest = { x: W * .5, y: Math.max(js + 8, H - (H > W ? 130 : 96)) };
+  joy.style.width = joy.style.height = js * 2 + 'px'; joy.style.margin = `-${js}px 0 0 -${js}px`;
+  joy.style.left = rest.x + 'px'; joy.style.top = rest.y + 'px';
+  act.style.width = act.style.height = as + 'px';
+  act.style.right = 'calc(var(--sar) + 22px)'; act.style.bottom = H > W ? 'calc(var(--sab) + 96px)' : 'calc(var(--sab) + 20px)';
+  act.addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); AUDIO.unlock(); act.classList.add('press'); if (G.state === 'play') NET.action(); });
+  const up = () => act.classList.remove('press'); act.addEventListener('pointerup', up); act.addEventListener('pointercancel', up); act.addEventListener('pointerleave', up);
+  INPUT.zones.push({ r, el: z, joy, kn: joy.firstElementChild, rest, act, ptr: null, vx: 0, vy: 0, ox: 0, oy: 0 });
+  if (G.state !== 'play' && G.state !== 'paused') $('zones').classList.add('hidden'); else $('zones').classList.remove('hidden');
 }
 function zoneAt(x, y) { for (let i = 0; i < INPUT.zones.length; i++) { const r = INPUT.zones[i].r; if (x >= r[0] && x < r[0] + r[2] && y >= r[1] && y < r[1] + r[3]) return i; } return -1; }
-function isUI(el) { return !!(el && el.closest && el.closest('button,.card,.btn,#themeRow,.act,#title,#panel:not(.hidden),#summary:not(.hidden)')); }
+function isUI(el) { return !!(el && el.closest && el.closest('button,.card,.btn,#themeRow,.act,#title,#tut:not(.hidden),#panel:not(.hidden),#summary:not(.hidden)')); }
 const app = $('app');
 app.addEventListener('pointerdown', (e) => {
   AUDIO.unlock();
@@ -2316,7 +2398,7 @@ app.addEventListener('pointerdown', (e) => {
   e.preventDefault();
   if (e.pointerType === 'mouse' && e.button === 2) { INPUT.gesture = { mouse: true, x: e.clientX, y: e.clientY, id: e.pointerId }; return; }
   // two-finger camera gesture in single-player
-  if (G.nPlayers === 1 && e.pointerType === 'touch' && INPUT.ptr.size === 1) {
+  if (e.pointerType === 'touch' && INPUT.ptr.size === 1) {
     const [id0, p0] = [...INPUT.ptr.entries()][0];
     INPUT.gesture = { ids: [id0, e.pointerId], pts: { [id0]: { x: p0.x, y: p0.y }, [e.pointerId]: { x: e.clientX, y: e.clientY } }, d0: 0, ax: 0 };
     const zz = INPUT.zones[p0.zone]; if (zz) releaseJoy(zz);
@@ -2373,21 +2455,23 @@ document.addEventListener('touchmove', (e) => { if (!e.target.closest || !e.targ
 document.addEventListener('dblclick', (e) => e.preventDefault());
 window.addEventListener('keydown', (e) => {
   AUDIO.unlock();
+  if (e.target && e.target.tagName === 'INPUT') return;
   if (e.repeat && !e.code.startsWith('Arrow')) { INPUT.keys.add(e.code); return; }
   INPUT.keys.add(e.code);
   if (G.state === 'play') {
-    KEYMAP.forEach((k, i) => { if (k.a.includes(e.code) && G.players[i]) G.players[i].action(); });
+    if (KEYS.a.includes(e.code) && !e.repeat) NET.action();
     if (e.code === 'KeyC') UI.cycleCam();
     if (e.code === 'Escape') UI.open('menu');
   }
-  if (['Digit1', 'Digit2', 'Digit3', 'Digit4'].includes(e.code)) setTheme(+e.code.slice(5) - 1);
+  if (['Digit1', 'Digit2', 'Digit3', 'Digit4'].includes(e.code) && NET.role !== 'client' && !(e.target && e.target.tagName === 'INPUT')) setTheme(+e.code.slice(5) - 1);
   if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault();
 });
 window.addEventListener('keyup', (e) => INPUT.keys.delete(e.code));
 window.addEventListener('blur', () => INPUT.keys.clear());
 const _ray = new THREE.Raycaster(), _ndc = new THREE.Vector2(), _plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
-function handleTap(x, y, zi) {
-  const p = G.players[Math.max(0, zi)] || G.players[0]; if (!p) return;
+function handleTap(x, y, zi) { handleTap0(x, y, zi); const p = myPlayer(); if (p && p.target) NET.sendTarget(p.target); }
+function handleTap0(x, y, zi) {
+  const p = myPlayer(); if (!p) return;
   _ndc.set(x / innerWidth * 2 - 1, -(y / innerHeight) * 2 + 1); _ray.setFromCamera(_ndc, camera);
   const hit = _ray.ray.intersectPlane(_plane, _v2); if (!hit) return;
   // also test a raised plane (machines sit at counter height)
@@ -2405,17 +2489,15 @@ const TAPMARK = new THREE.Mesh(new THREE.RingGeometry(.25, .34, 32), new THREE.M
 TAPMARK.rotation.x = -Math.PI / 2; TAPMARK.renderOrder = 4; TAPMARK.visible = false; scene.add(TAPMARK); TAPMARK.userData.t = 0;
 function marker(x, z) { TAPMARK.position.set(x, .03, z); TAPMARK.visible = true; TAPMARK.userData.t = .6; TAPMARK.material.color.set(THEME.ui.accent); }
 function readInputs() {
-  // camera-relative movement directions
+  // camera-relative movement for this device's barista (world-space vector, so it is valid on the host too)
   const fx = -Math.sin(CAM.az), fz = -Math.cos(CAM.az), rx = -fz, rz = fx;
-  G.players.forEach((p, i) => {
-    let x = 0, y = 0; const z = INPUT.zones[i];
-    if (z && z.ptr !== null) { x = z.vx; y = z.vy; }
-    const k = KEYMAP[i];
-    if (k) { if (k.u.some(c => INPUT.keys.has(c))) y -= 1; if (k.d.some(c => INPUT.keys.has(c))) y += 1; if (k.l.some(c => INPUT.keys.has(c))) x -= 1; if (k.r.some(c => INPUT.keys.has(c))) x += 1; }
-    if (G.nPlayers === 1) { if (INPUT.keys.has('ArrowUp')) y -= 1; if (INPUT.keys.has('ArrowDown')) y += 1; if (INPUT.keys.has('ArrowLeft')) x -= 1; if (INPUT.keys.has('ArrowRight')) x += 1; }
-    const m = Math.hypot(x, y); if (m > 1) { x /= m; y /= m; }
-    p.ix = rx * x + fx * -y; p.iz = rz * x + fz * -y;
-  });
+  const p = myPlayer(); if (!p) return;
+  let x = 0, y = 0; const z = INPUT.zones[0];
+  if (z && z.ptr !== null) { x = z.vx; y = z.vy; }
+  if (KEYS.u.some(c => INPUT.keys.has(c))) y -= 1; if (KEYS.d.some(c => INPUT.keys.has(c))) y += 1;
+  if (KEYS.l.some(c => INPUT.keys.has(c))) x -= 1; if (KEYS.r.some(c => INPUT.keys.has(c))) x += 1;
+  const m = Math.hypot(x, y); if (m > 1) { x /= m; y /= m; }
+  p.ix = rx * x + fx * -y; p.iz = rz * x + fz * -y;
 }
 
 // =============================================================================
@@ -2504,6 +2586,7 @@ function setTheme(i) {
   GROUNDARROW.material.color.set(U.accent);
   HUD.ordersDirty = true; HUD.buildStatic(); UI.refreshTitle();
   try { localStorage.setItem('nrcc_theme', '' + i); } catch (e) {}
+  if (NET.role === 'host') NET.sendRel({ k: 'theme', i: THEMES.indexOf(THEME) });
 }
 
 // =============================================================================
@@ -2516,7 +2599,7 @@ const HUD = {
     THEMES.forEach((th, i) => {
       const b = document.createElement('button'); b.className = 'btn' + (th === THEME ? ' on' : ''); b.dataset.theme = i;
       b.innerHTML = `${i + 1}<i style="background:${th.ui.accent}"></i>`; b.title = th.name;
-      b.addEventListener('click', (e) => { e.stopPropagation(); setTheme(i); SFX.click(); }); tr.appendChild(b);
+      b.addEventListener('click', (e) => { e.stopPropagation(); if (NET.role === 'client') { toast('THEME IS PICKED BY THE HOST'); return; } setTheme(i); SFX.click(); }); tr.appendChild(b);
     });
     $('hStars').innerHTML = '<b></b><b></b><b></b><b></b><b></b>';
     this.ordersDirty = true; this.layout();
@@ -2537,13 +2620,12 @@ const HUD = {
     } else {
       this.leftFrac = 0;
       this.topFrac = clamp((y - 8) / innerHeight * .8, .05, .32);
-      this.botFrac = G.nPlayers === 1 ? .04 : .0;
+      this.botFrac = .04;
     }
-    const mp3 = G.nPlayers >= 3 || (G.nPlayers === 2 && (port || innerHeight < 500));
-    $('hud').classList.toggle('mp3', mp3);
-    const O = $('orders').style;
-    if (mp3 && !port && G.state !== 'title') { O.top = (goal.top - 2) + 'px'; O.left = (goal.right + 8) + 'px'; O.transform = 'none'; }
-    else { O.left = ''; O.transform = ''; }
+    const pl = $('plist'); if (pl) { pl.style.top = (y - 4) + 'px'; }
+    const online = NET.role !== 'solo' && G.players.length > 1;
+    $('hud').classList.toggle('online', online);
+    if (online) { const ph = pl ? pl.getBoundingClientRect().height + 4 : 0; $('orders').style.top = (y + ph) + 'px'; $('side').style.top = (y + ph) + 'px'; }
     const sideH = innerHeight - y - 60;
     $('side').style.display = sideH < 120 && !port ? 'none' : '';
   },
@@ -2562,13 +2644,13 @@ const HUD = {
     $('hRep').textContent = G.rep.toFixed(1);
     [...$('hStars').children].forEach((b, i) => b.className = G.rep >= i + .5 ? 'on' : '');
     // orders
-    const port = innerHeight > innerWidth, maxT = G.nPlayers > 1 && (G.nPlayers >= 3 || port || innerHeight < 500) ? 3 : innerHeight < 430 ? 3 : port ? 4 : 5;
+    const port = innerHeight > innerWidth, maxT = innerHeight < 430 ? 3 : port ? 4 : 5;
     const list = G.queue.filter(c => c.state === 'queue' || c.state === 'walk').slice(0, maxT);
     const O = $('orders');
     if (this.ordersDirty || O.children.length !== list.length) {
       this.ordersDirty = false;
       O.innerHTML = list.map(c => { const cnt = {}; c.need.forEach(t => cnt[t] = (cnt[t] || 0) + 1);
-        return `<div class="tk" data-id="${c.id}"><div class="tn"><span>#${pad2(c.id % 100)}</span><span>${c.slot === 0 ? (G.nPlayers > 1 ? 'NOW' : 'AT REGISTER') : 'Q' + (c.slot + 1)}</span></div><div class="ti">${Object.keys(cnt).map(t => `<img src="${ICON_URL[t]}">${cnt[t] > 1 ? `<b style="font-size:10px">×${cnt[t]}</b>` : ''}`).join('')}</div><div class="tb"><i></i></div></div>`; }).join('');
+        return `<div class="tk" data-id="${c.id}"><div class="tn"><span>#${pad2(c.id % 100)}</span><span>${c.slot === 0 ? 'AT REGISTER' : 'Q' + (c.slot + 1)}</span></div><div class="ti">${Object.keys(cnt).map(t => `<img src="${ICON_URL[t]}">${cnt[t] > 1 ? `<b style="font-size:10px">×${cnt[t]}</b>` : ''}`).join('')}</div><div class="tb"><i></i></div></div>`; }).join('');
     }
     [...O.children].forEach((el, i) => { const c = list[i]; if (!c) return; const b = el.querySelector('.tb i'); b.style.width = (c.pat * 100).toFixed(0) + '%'; b.style.background = c.pat > .5 ? THEME.ui.ok : c.pat > .25 ? '#ffa000' : '#e2231a'; el.style.borderLeftColor = c.slot === 0 ? THEME.ui.accent : THEME.ui.line; });
     // resources
@@ -2587,15 +2669,15 @@ const HUD = {
     // goal
     const gl = GOAL.cur; $('goalTxt').textContent = gl ? gl.txt : '';
     $('goalProg').textContent = `${DS.served} SERVED`;
-    // per-player tags
-    const best = Math.max(...G.players.map(p => G.mode === 'versus' ? p.stats.earned : p.stats.served));
-    INPUT.zones.forEach((z, i) => { const p = G.players[i]; if (!p) return; const v = G.mode === 'versus' ? fmtCash(p.stats.earned) : p.stats.served + ' served';
-      z.tag.querySelector('.zs').textContent = v + (G.mode === 'versus' && best > 0 && (p.stats.earned === best) ? ' ★' : ''); });
+    // online: one chip per barista (colour, name, score, link state) + this device's connection
+    NET.hudUpdate();
     // station card refresh
     UI.updateCard();
   },
 };
 function toast(txt, kind = '') {
+  if (NET.applying) return;
+  if (NET.role === 'host' && NET.inGame) NET.fx('t', [txt, kind]);
   const T = $('toast'); if (T.children.length > 2) T.firstChild.remove();
   const d = document.createElement('div'); d.className = 'toast'; d.textContent = txt;
   if (kind === 'warn') d.style.background = THEME.ui.warn; if (kind === 'acc') { d.style.background = THEME.ui.accent; d.style.color = THEME.ui.accentFg; }
@@ -2622,7 +2704,7 @@ function chainGoal(t, p, depth) {
   return { txt: `${s.title} ready`, t: s.zone };
 }
 function computeGoal() {
-  const p = G.players[0]; if (!p) return null;
+  const p = myPlayer(); if (!p) return null;
   if (!G.open && !G.queue.length) return { txt: 'Closing up — last guests finishing', t: null };
   if (CASHPILE.items.length >= 4 || (CASHPILE.items.length && !G.queue.length)) return { txt: 'Collect the cash at the tray', t: CASHZ };
   const pad = PADS.find(u => u.visible && !u.done && G.cash + .01 >= (u.cost - u.paid));
@@ -2647,8 +2729,8 @@ function updateGoal(dt) {
     GOALPTR.position.set(g.t.x, 2.0 + Math.sin(t * 4) * .12, g.t.z); ch.rotation.y = t * 2;
     ring.position.set(g.t.x, .03, g.t.z); ring.scale.setScalar((g.t.r || .9) / .8 * (1 + Math.sin(t * 5) * .05)); ring.material.opacity = .6 + Math.sin(t * 5) * .3;
   }
-  const p = G.players[0];
-  if (vis && p && G.nPlayers === 1) {
+  const p = myPlayer();
+  if (vis && p) {
     const dx = g.t.x - p.ch.pos.x, dz = g.t.z - p.ch.pos.z, d = Math.hypot(dx, dz);
     GROUNDARROW.visible = d > 1.6;
     GROUNDARROW.position.set(p.ch.pos.x + dx / d * 1.05, .04, p.ch.pos.z + dz / d * 1.05); GROUNDARROW.rotation.y = Math.atan2(dx, dz);
@@ -2659,48 +2741,50 @@ function updateGoal(dt) {
 // =============================================================================
 // 25  SCREENS — title, menu, recipes, upgrades, station card, day summary
 // =============================================================================
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const UI = {
   sel: { n: 1, mode: 'coop' }, card: null, cardT: 0,
   refreshTitle() {
     const T = $('title'); if (T.classList.contains('hidden')) return;
-    const n = this.sel.n, md = this.sel.mode;
+    if (NET.screen) { NET.renderScreen(); HUD.layout(); return; }
     T.innerHTML = `<div class="card">
       <div class="tt"><div class="meta"><span>NRCC—01</span><span>COFFEE · SURVIVAL · STRATEGY</span></div>
       <div class="logo">No Rush<br><b>Coffee Club</b></div></div>
-      <div class="lbl"><span class="ix">01</span><span class="k">Baristas on this device</span></div>
-      <div class="seg" style="grid-template-columns:repeat(4,1fr)">${[1, 2, 3, 4].map(i => `<button class="btn ${i === n ? 'on' : ''}" data-n="${i}">${i}P</button>`).join('')}</div>
-      <div class="lbl"><span class="ix">02</span><span class="k">Scoring</span></div>
-      <div class="seg" style="grid-template-columns:1fr 1fr"><button class="btn ${md === 'coop' ? 'on' : ''}" data-mode="coop">Co-op · shared goal</button><button class="btn ${md === 'versus' ? 'on' : ''}" data-mode="versus" ${n === 1 ? 'disabled style="opacity:.4"' : ''}>Versus · own score</button></div>
-      <div class="lbl"><span class="ix">03</span><span class="k">Design language</span></div>
+      <div class="lbl"><span class="ix">01</span><span class="k">Play</span></div>
+      <button class="btn primary big" data-start style="margin-top:6px">Play solo</button>
+      <div class="seg" style="grid-template-columns:1fr 1fr;margin-top:6px"><button class="btn" data-host>Host online</button><button class="btn" data-join>Join · code</button></div>
+      <div class="lbl"><span class="ix">02</span><span class="k">Design language</span></div>
       <div class="seg" style="grid-template-columns:repeat(4,1fr)">${THEMES.map((th, i) => `<button class="btn ${th === THEME ? 'on' : ''}" data-th="${i}"><span style="font-size:11px">${i + 1} ${th.short}</span></button>`).join('')}</div>
-      <button class="btn primary big" data-start>Open the café</button>
-      <div class="k" style="margin-top:10px;line-height:1.6;text-transform:none;letter-spacing:.02em;font-weight:600">Drag = walk · stand at a station to load / pick up · serve at the register · stand on orange pads to unlock. No rush: calm, perfect shots tip more.</div>
+      <div class="seg" style="grid-template-columns:1fr;margin-top:8px"><button class="btn" data-how>How to play</button></div>
+      <div class="k" style="margin-top:10px;line-height:1.6;text-transform:none;letter-spacing:.02em;font-weight:600">Online: 1–4 baristas, one phone each. Host shares a 5-letter room code.</div>
     </div>`;
-    T.querySelectorAll('[data-n]').forEach(b => b.onclick = () => { this.sel.n = +b.dataset.n; if (this.sel.n === 1) this.sel.mode = 'coop'; SFX.click(); this.refreshTitle(); });
-    T.querySelectorAll('[data-mode]').forEach(b => b.onclick = () => { if (this.sel.n === 1) return; this.sel.mode = b.dataset.mode; SFX.click(); this.refreshTitle(); });
     T.querySelectorAll('[data-th]').forEach(b => b.onclick = () => { setTheme(+b.dataset.th); SFX.click(); });
-    T.querySelector('[data-start]').onclick = () => { AUDIO.unlock(); newGame(this.sel.n, this.sel.mode); };
+    T.querySelector('[data-start]').onclick = () => { AUDIO.unlock(); NET.leave(); newGame(1, 'coop'); };
+    T.querySelector('[data-host]').onclick = () => { AUDIO.unlock(); SFX.click(); NET.host(); };
+    T.querySelector('[data-join]').onclick = () => { AUDIO.unlock(); SFX.click(); NET.showJoin(''); };
+    T.querySelector('[data-how]').onclick = () => { AUDIO.unlock(); SFX.click(); TUT.open(); };
     HUD.layout();
   },
   open(kind) {
     if (G.state !== 'play' && G.state !== 'paused') return;
-    const P = $('panel'); G.state = 'paused'; P.classList.remove('hidden'); SFX.click();
+    const P = $('panel'); if (NET.role === 'solo') G.state = 'paused'; P.classList.remove('hidden'); SFX.click();
     const close = `<button class="btn primary big" data-close>Resume</button>`;
     if (kind === 'menu') {
-      P.innerHTML = `<div class="card"><h3>Menu · Day ${pad2(G.day)}</h3><h2>Paused</h2><div class="hr"></div>
-        <div class="lbl"><span class="ix">01</span><span class="k">Baristas (restarts the run)</span></div>
-        <div class="seg" style="grid-template-columns:repeat(4,1fr)">${[1, 2, 3, 4].map(i => `<button class="btn ${i === G.nPlayers ? 'on' : ''}" data-n="${i}">${i}P</button>`).join('')}</div>
-        <div class="lbl"><span class="ix">02</span><span class="k">Scoring (live)</span></div>
-        <div class="seg" style="grid-template-columns:1fr 1fr"><button class="btn ${G.mode === 'coop' ? 'on' : ''}" data-mode="coop">Co-op</button><button class="btn ${G.mode === 'versus' ? 'on' : ''}" data-mode="versus">Versus</button></div>
-        <div class="lbl"><span class="ix">03</span><span class="k">Design language</span></div>
-        <div class="seg" style="grid-template-columns:repeat(4,1fr)">${THEMES.map((th, i) => `<button class="btn ${th === THEME ? 'on' : ''}" data-th="${i}">${i + 1} ${th.short}</button>`).join('')}</div>
-        <div class="seg" style="grid-template-columns:1fr 1fr;margin-top:12px"><button class="btn" data-sound>Sound ${G.sound ? 'on' : 'off'}</button><button class="btn" data-quit>Quit to title</button></div>
+      const on = NET.role !== 'solo', host = NET.role !== 'client';
+      P.innerHTML = `<div class="card"><h3>Menu · Day ${pad2(G.day)}</h3><h2>${on ? 'Room ' + NET.code : 'Paused'}</h2><div class="hr"></div>
+        ${on ? `<div class="lbl"><span class="ix">01</span><span class="k">Online · ${NET.role === 'host' ? 'you host' : 'host runs the café'} · the café keeps running</span></div>
+        <div class="k" style="text-transform:none;line-height:1.6">${G.players.map(p => `<span style="color:${p.color}">■</span> ${esc(p.name)}${p.away ? ' (away)' : ''}`).join(' &nbsp; ')}</div>` : ''}
+        <div class="lbl"><span class="ix">${on ? '02' : '01'}</span><span class="k">Scoring ${host ? '(live)' : '· set by host'}</span></div>
+        <div class="seg" style="grid-template-columns:1fr 1fr"><button class="btn ${G.mode === 'coop' ? 'on' : ''}" data-mode="coop" ${host ? '' : 'disabled'}>Co-op</button><button class="btn ${G.mode === 'versus' ? 'on' : ''}" data-mode="versus" ${host ? '' : 'disabled'}>Versus</button></div>
+        <div class="lbl"><span class="ix">${on ? '03' : '02'}</span><span class="k">Design language ${host ? '' : '· set by host'}</span></div>
+        <div class="seg" style="grid-template-columns:repeat(4,1fr)">${THEMES.map((th, i) => `<button class="btn ${th === THEME ? 'on' : ''}" data-th="${i}" ${host ? '' : 'disabled'}>${i + 1} ${th.short}</button>`).join('')}</div>
+        <div class="seg" style="grid-template-columns:1fr 1fr 1fr;margin-top:12px"><button class="btn" data-how>How to play</button><button class="btn" data-sound>Sound ${G.sound ? 'on' : 'off'}</button><button class="btn" data-quit>${on ? 'Leave room' : 'Quit to title'}</button></div>
         ${close}</div>`;
-      P.querySelectorAll('[data-n]').forEach(b => b.onclick = () => { const n = +b.dataset.n; P.classList.add('hidden'); newGame(n, n === 1 ? 'coop' : G.mode); });
-      P.querySelectorAll('[data-mode]').forEach(b => b.onclick = () => { G.mode = b.dataset.mode; this.open('menu'); });
-      P.querySelectorAll('[data-th]').forEach(b => b.onclick = () => { setTheme(+b.dataset.th); this.open('menu'); });
+      P.querySelectorAll('[data-mode]').forEach(b => b.onclick = () => { if (!host) return; G.mode = b.dataset.mode; NET.broadcastMode(); this.open('menu'); });
+      P.querySelectorAll('[data-th]').forEach(b => b.onclick = () => { if (!host) return; setTheme(+b.dataset.th); this.open('menu'); });
+      P.querySelector('[data-how]').onclick = () => { P.classList.add('hidden'); TUT.open(() => { if (G.state === 'paused') G.state = 'play'; }); };
       P.querySelector('[data-sound]').onclick = () => { G.sound = !G.sound; if (AUDIO.master) AUDIO.master.gain.value = G.sound ? .5 : 0; this.open('menu'); };
-      P.querySelector('[data-quit]').onclick = () => { P.classList.add('hidden'); toTitle(); };
+      P.querySelector('[data-quit]').onclick = () => { P.classList.add('hidden'); NET.leave(); toTitle(); };
     } else if (kind === 'recipes') {
       const R = [['espresso', 'BEANS → GRINDER → GROUNDS · + CUP → ESPRESSO', 'esp1'], ['latte', 'ESPRESSO + MILK → STEAMER', 'steamer'], ['americano', 'ESPRESSO → WATER TOWER', 'water'], ['croissant', 'PASTRY CASE bakes them · just pick up', 'pastry']];
       P.innerHTML = `<div class="card"><h3>Recipes</h3><h2>The menu</h2><div class="hr"></div>
@@ -2712,7 +2796,7 @@ const UI = {
         ${UPG.map((u, i) => { const lv = G.upg[u.id], max = lv >= 3, c = max ? 0 : u.costs[lv]; return `<div class="row"><span class="ix">${pad2(i + 1)}</span><div><div class="nm">${u.name} <span class="k">LV ${lv}/3</span></div><div class="ds">${u.desc}</div></div><button class="btn ${!max && G.cash >= c ? 'primary' : ''}" data-up="${u.id}" ${max ? 'disabled' : ''}>${max ? 'MAX' : fmtCash(c)}</button></div>`; }).join('')}
         <div class="lbl"><span class="ix">→</span><span class="k">Expansions are bought on the orange floor pads</span></div>
         ${close}</div>`;
-      P.querySelectorAll('[data-up]').forEach(b => b.onclick = () => { if (buyUpgrade(b.dataset.up)) this.open('upgrades'); });
+      P.querySelectorAll('[data-up]').forEach(b => b.onclick = () => { NET.buy(b.dataset.up); setTimeout(() => { if (!$('panel').classList.contains('hidden')) this.open('upgrades'); }, NET.role === 'client' ? 250 : 0); });
     }
     const c = P.querySelector('[data-close]'); if (c) c.onclick = () => this.close();
     P.onclick = (e) => { if (e.target === P) this.close(); };
@@ -2722,7 +2806,7 @@ const UI = {
   stationCard(s) {
     let el = $('scard');
     if (!el) { el = document.createElement('div'); el.id = 'scard'; el.className = 'card'; Object.assign(el.style, { position: 'absolute', left: '50%', transform: 'translateX(-50%)', width: 'min(340px,86vw)', padding: '10px 12px', pointerEvents: 'auto', bottom: 'calc(var(--sab) + 12px)', zIndex: 5 }); $('hud').appendChild(el); }
-    this.card = s; this.cardT = 5; CAM.focus = s; CAM.focusT = G.nPlayers === 1 ? 2.2 : 0; el.style.display = ''; this.updateCard(true);
+    this.card = s; this.cardT = 5; CAM.focus = s; CAM.focusT = 2.2; el.style.display = ''; this.updateCard(true);
   },
   updateCard(force) {
     const el = $('scard'); if (!el || !this.card) return;
@@ -2736,7 +2820,7 @@ const UI = {
       <div style="font-size:15px;font-weight:800;margin-top:2px">${s.title}</div>
       <div class="k" style="text-transform:none;margin-top:3px">${ins || (s.kind === 'source' ? 'STOCK ' + s.out.items.length + ' — restocked by delivery' : 'OUTPUT ' + s.out.items.length)}</div></div>
       ${u ? `<button class="btn ${lv < 3 && G.cash >= cost ? 'primary' : ''}" data-cup style="min-width:96px;padding:0 8px">${lv >= 3 ? 'MAX LV' : `${u.name}<br>${fmtCash(cost)}`}</button>` : ''}</div>`;
-    if (force || el._h !== html) { el._h = html; el.innerHTML = html; const b = el.querySelector('[data-cup]'); if (b) b.onclick = (e) => { e.stopPropagation(); buyUpgrade(u.id); this.cardT = 5; this.updateCard(true); }; }
+    if (force || el._h !== html) { el._h = html; el.innerHTML = html; const b = el.querySelector('[data-cup]'); if (b) b.onclick = (e) => { e.stopPropagation(); NET.buy(u.id); this.cardT = 5; this.updateCard(true); }; }
   },
   summary(o) {
     const trayV = o.swept || 0;
@@ -2747,7 +2831,7 @@ const UI = {
     const title = o.over ? 'Café closed' : o.met ? 'Day complete' : 'Day survived';
     const badge = o.over ? `<span class="banner" style="background:var(--warn);color:#fff">GAME OVER — ${G.rep < 1 ? 'REPUTATION TOO LOW' : 'TWO DAYS IN THE RED'}</span>` : o.met ? `<span class="banner" style="background:var(--accent);color:var(--accent-fg)">GOAL MET · ${fmtCash(o.earned)} / ${fmtCash(o.goal)}</span>` : `<span class="banner" style="background:var(--fg);color:var(--bg)">GOAL MISSED · ${fmtCash(o.earned)} / ${fmtCash(o.goal)}</span>`;
     S.innerHTML = `<div class="card" style="width:min(620px,100%)">
-      <div style="display:flex;justify-content:space-between;align-items:baseline"><h3>Day ${pad2(G.day)} · summary</h3><h3>${THEME.short} · ${G.nPlayers}P ${G.mode.toUpperCase()}</h3></div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline"><h3>Day ${pad2(G.day)} · summary</h3><h3>${THEME.short} · ${NET.role === 'solo' ? 'SOLO' : G.players.length + 'P ONLINE ' + G.mode.toUpperCase()}</h3></div>
       <h2 style="margin-top:4px">${title}</h2><div style="margin-top:8px">${badge}</div>
       <div class="sgrid">
         <div class="sbox acc"><div class="k">Earned</div><div class="v num">${fmtCash(o.earned)}</div></div>
@@ -2761,15 +2845,626 @@ const UI = {
         <tr><td>Sales</td><td class="num">${fmtCash(DS.revenue)}</td></tr><tr><td>Tips (no-rush bonus)</td><td class="num">${fmtCash(DS.tips)}</td></tr>
         ${DS.spent ? `<tr><td>Builds &amp; upgrades</td><td class="num">−${fmtCash(DS.spent)}</td></tr>` : ''}<tr><td>Rent</td><td class="num">−${fmtCash(o.rent)}</td></tr>${trayV ? `<tr><td style="color:var(--mute)">incl. swept from the tray at close</td><td class="num" style="color:var(--mute)">${fmtCash(trayV)}</td></tr>` : ''}<tr><td><b>Cash in the drawer</b></td><td class="num"><b>${fmtCash(G.cash)}</b></td></tr></table>
       ${G.players.length > 1 ? `<table class="ptab"><tr><th>Barista</th><th>Served</th><th>Perfect</th><th>Earned</th><th>Invested</th></tr>
-        ${ps.map(p => `<tr><td><i style="background:${p.color}"></i><b>${PLAYER_NAMES[p.i]}</b>${winner === p ? ' ★ MVP' : ''}</td><td class="num">${p.stats.served}</td><td class="num">${p.stats.perfect}</td><td class="num">${fmtCash(p.stats.earned)}</td><td class="num">${fmtCash(p.stats.paid)}</td></tr>`).join('')}</table>` : ''}
+        ${ps.map(p => `<tr><td><i style="background:${p.color}"></i><b>${esc(p.name)}</b>${winner === p ? ' ★ MVP' : ''}</td><td class="num">${p.stats.served}</td><td class="num">${p.stats.perfect}</td><td class="num">${fmtCash(p.stats.earned)}</td><td class="num">${fmtCash(p.stats.paid)}</td></tr>`).join('')}</table>` : ''}
       ${DS.unlocks.length ? `<div class="k" style="margin-top:10px">Built today: ${DS.unlocks.join(' · ')}</div>` : ''}
       ${o.red && !o.over ? `<div class="k" style="margin-top:10px;color:var(--warn)">In the red — clear the debt tomorrow or the café closes</div>` : ''}
       <div class="k" style="margin-top:10px;text-transform:none">Tomorrow: goal ${fmtCash(goalFor(G.day + 1))} · rent ${fmtCash(rentFor(G.day + 1))}${G.day + 1 >= 2 ? ' · events: peak hours, heat, supply delays' : ''}</div>
-      <button class="btn primary big" data-next>${o.over ? 'Start a new café' : `Open day ${pad2(G.day + 1)}`}</button></div>`;
-    S.querySelector('[data-next]').onclick = () => { S.classList.add('hidden'); if (o.over) newGame(G.nPlayers, G.mode); else { G.day++; G.state = 'play'; startDay(); } };
+      ${NET.role === 'client' ? `<button class="btn big" disabled style="opacity:.6">Waiting for the host…</button>` : `<button class="btn primary big" data-next>${o.over ? 'Start a new café' : `Open day ${pad2(G.day + 1)}`}</button>`}</div>`;
+    const nb = S.querySelector('[data-next]');
+    if (nb) nb.onclick = () => { S.classList.add('hidden'); if (o.over) { if (NET.role === 'host') NET.startGame(); else newGame(1, 'coop'); } else { G.day++; G.state = 'play'; startDay(); } };
   },
 };
 document.querySelectorAll('#cBtns [data-ui]').forEach(b => b.addEventListener('click', (e) => { e.stopPropagation(); AUDIO.unlock(); const k = b.dataset.ui; if (k === 'cam') UI.cycleCam(); else UI.open(k); }));
+
+// =============================================================================
+// 29  ONLINE MULTIPLAYER — PeerJS signalling, host-authoritative simulation
+// -----------------------------------------------------------------------------
+// The host's browser runs the whole café (customers, stations, stock, cash,
+// reputation, day cycle, unlocks, events) and streams snapshots (~15 Hz) to up
+// to 3 guests. Guests send their joystick vector (~30 Hz) + action / tap / buy
+// requests, predict their own barista locally and interpolate everything else.
+// Two data channels per guest: 'r' reliable (lobby, start, actions, theme, day
+// summary, pings) and 'u' unreliable (snapshots, inputs; falls back to 'r').
+// PeerJS is loaded lazily from unpkg only when you host or join, so solo play
+// never touches the network. Only public STUN servers are configured: two
+// phones behind strict/symmetric NATs (some mobile carriers) need a TURN relay,
+// which is not included — add one to NET_CFG.ice if your players cannot connect.
+// =============================================================================
+const NET_CFG = {
+  lib: 'https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js', prefix: 'nrcc-',
+  ice: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' }, { urls: 'stun:stun.cloudflare.com:3478' }],
+  snapHz: 15, inputHz: 30, lostMs: 8000, interp: 120, retryMs: 3000, maxPlayers: 4,
+};
+const CODE_ABC = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; // no I L O 0 1
+const ITEM_KEYS = Object.keys(ITEM);
+const encI = (e) => ITEM_KEYS.indexOf(e.t) * 4 + ((e.q | 0) + 1);
+const decI = (n) => [ITEM_KEYS[n >> 2], (n & 3) - 1];
+const hcid = (s) => { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return (h >>> 0).toString(36); };
+const r2 = (v) => Math.round(v * 100) / 100;
+const nowMs = () => performance.now();
+const NETV = new THREE.Vector3();
+function lsGet(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : v; } catch (e) { return d; } }
+function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+function myCid() { if (window.__nrccCid) return window.__nrccCid; let c = lsGet('nrcc_cid', ''); if (!c) { c = Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4); lsSet('nrcc_cid', c); } return c; }
+function myName() { if (NET.name === undefined) NET.name = (lsGet('nrcc_name', '') || '').slice(0, 10); return NET.name; }
+function setMyName(v) { NET.name = String(v || '').slice(0, 10); lsSet('nrcc_name', NET.name); }
+function genCode() { let s = ''; for (let i = 0; i < 5; i++) s += CODE_ABC[Math.floor(Math.random() * CODE_ABC.length)]; return s; }
+function cleanCode(s) { return String(s || '').toUpperCase().replace(/[^A-Z0-9]/g, '').split('').filter(c => CODE_ABC.includes(c)).join('').slice(0, 5); }
+
+Object.assign(NET, {
+  peer: null, code: '', status: '', slots: [], conn: null, uconn: null, seq: 0, fxq: [], stats: { conns: 0 }, lastRx: 0, snapAt: 0, inAt: 0, pingAt: 0, ping: 0,
+  lobby: null, ready: false, tries: 0, retryAt: 0, closed: false, cust: new Map(), synced: false, _built: '', mode: 'coop', lastIn: null,
+
+  // ---------------------------------------------------------------- library
+  loadLib() {
+    if (window.Peer) return Promise.resolve();
+    if (this._lib) return this._lib;
+    this._lib = new Promise((res, rej) => {
+      const s = document.createElement('script'); s.src = NET_CFG.lib; s.async = true;
+      s.onload = () => window.Peer ? res() : rej(new Error('PeerJS missing'));
+      s.onerror = () => { this._lib = null; s.remove(); rej(new Error('PeerJS failed to load')); };
+      document.head.appendChild(s);
+    });
+    return this._lib;
+  },
+  peerOpts() { return { config: { iceServers: NET_CFG.ice }, debug: 0 }; },
+
+  // ---------------------------------------------------------------- common
+  setStatus(t) { this.status = t; this.updateScreen(); },
+  leave() {
+    if (this.role === 'client' && this.conn && this.conn.open) { try { this.conn.send({ k: 'bye' }); } catch (e) {} }
+    if (this.role === 'host') this.sendRel({ k: 'bye' });
+    const peer = this.peer; this.peer = null;
+    for (const s of this.slots) { this.closeConn(s.conn); this.closeConn(s.uconn); }
+    this.closeConn(this.conn); this.closeConn(this.uconn);
+    if (peer) setTimeout(() => { try { peer.destroy(); } catch (e) {} }, 60);
+    Object.assign(this, { role: 'solo', me: 0, inGame: false, screen: null, slots: [], conn: null, uconn: null, code: '', status: '', lobby: null, ready: false, closed: false, synced: false, _built: '', fxq: [] });
+    this.cust.clear();
+  },
+  closeConn(c) { if (!c) return; c._dead = true; try { c.close(); } catch (e) {} },
+  sendOn(c, m) { if (c && c.open && !c._dead) { try { c.send(m); return true; } catch (e) {} } return false; },
+  sendRel(m) { if (this.role === 'host') { for (const s of this.slots) if (!s.host) this.sendOn(s.conn, m); } else if (this.role === 'client') this.sendOn(this.conn, m); },
+  sendFast(m) { if (this.role === 'client') { if (!this.sendOn(this.uconn, m)) this.sendOn(this.conn, m); } },
+  fx(type, args) { if (this.fxq.length < 80) this.fxq.push([type, args]); },
+
+  // ---------------------------------------------------------------- local actions (routed to host when you are a guest)
+  action() { const p = myPlayer(); if (!p) return; if (this.role === 'client') { this.sendRel({ k: 'a' }); if (!p.pile.items.length) HUD.flash('Hands empty'); } else p.action(); },
+  sendTarget(t) { if (this.role === 'client') this.sendRel({ k: 'tg', x: r2(t.x), z: r2(t.z), r: t.r || .3 }); },
+  buy(id) { if (this.role === 'client') { this.sendRel({ k: 'buy', id }); SFX.click(); } else buyUpgrade(id); },
+  broadcastMode() { if (this.role === 'host') { this.mode = G.mode; this.sendRel({ k: 'mode', m: G.mode }); this.broadcastLobby(); } },
+  sendSummary(o) { this.sendRel({ k: 'sum', o, ds: DS, day: G.day, cash: G.cash, rep: G.rep, calmBest: G.calmBest, ps: G.players.map(p => p.stats) }); },
+
+  // ---------------------------------------------------------------- HOST
+  host() {
+    this.leave(); this.role = 'host'; this.me = 0; this.screen = 'lobby'; this.mode = 'coop';
+    this.slots = [{ cid: myCid(), name: myName() || 'Host', ready: true, on: true, host: true, last: nowMs(), ping: 0 }];
+    this.setStatus('Opening a room on the PeerJS broker…'); this.renderScreen();
+    this.loadLib().then(() => this.openHost(0)).catch(() => this.setStatus('Could not load the network library — check your connection.'));
+  },
+  openHost(tries) {
+    if (this.role !== 'host') return;
+    const code = genCode(), peer = new window.Peer(NET_CFG.prefix + code, this.peerOpts());
+    this.peer = peer;
+    peer.on('open', () => { if (this.peer !== peer) return; this.code = code; this.setStatus('Room open — share the code. Waiting for baristas.'); this.renderScreen(true); });
+    peer.on('connection', (c) => { if (this.peer === peer) this.onConn(c); });
+    peer.on('disconnected', () => { if (this.peer !== peer) return; this.setStatus('Broker link lost — reconnecting…'); setTimeout(() => { if (this.peer === peer && !peer.destroyed) { try { peer.reconnect(); } catch (e) {} } }, 1500); });
+    peer.on('error', (err) => {
+      if (this.peer !== peer) return;
+      const t = err && err.type;
+      if (t === 'unavailable-id' && tries < 5) { try { peer.destroy(); } catch (e) {} this.openHost(tries + 1); return; }
+      if (t === 'peer-unavailable') return;
+      this.setStatus('Network: ' + (t || 'error') + (t === 'browser-incompatible' ? ' — this browser has no WebRTC' : ''));
+    });
+  },
+  onConn(c) {
+    const md = c.metadata || {}; this.stats.conns++;
+    c.on('data', (d) => this.hostMsg(c, d));
+    c.on('close', () => this.hostDrop(c));
+    c.on('error', () => this.hostDrop(c));
+    if (md.ch === 'u') c.on('open', () => { const s = this.slots.find(x => x.cid === md.cid); if (s) { this.closeConn(s.uconn); s.uconn = c; } });
+  },
+  slotOf(c) { return this.slots.find(s => s.conn === c || s.uconn === c); },
+  hostMsg(c, d) {
+    if (!d || typeof d !== 'object') return;
+    if (d.k === 'hello') return this.onHello(c, d);
+    const s = this.slotOf(c); if (!s) return;
+    const i = this.slots.indexOf(s), p = this.inGame ? G.players[i] : null;
+    s.last = nowMs(); if (!s.on) { s.on = true; if (p) p.setAway(false); this.broadcastLobby(); }
+    switch (d.k) {
+      case 'i': if (p) { const m = Math.hypot(d.x, d.z) || 0; const k = m > 1 ? 1 / m : 1; p.ix = (+d.x || 0) * k; p.iz = (+d.z || 0) * k; s.lastIn = nowMs(); } break;
+      case 'a': if (p && G.state === 'play') p.action(); break;
+      case 'tg': if (p) p.target = { x: clamp(+d.x || 0, BOUNDS.x0, BOUNDS.x1), z: clamp(+d.z || 0, BOUNDS.z0, BOUNDS.z1), r: clamp(+d.r || .3, .15, .5) }; break;
+      case 'buy': if (this.inGame && G.state === 'play' && UPG.some(u => u.id === d.id)) buyUpgrade(d.id); break;
+      case 'ready': s.ready = !!d.r; if (typeof d.name === 'string') { s.name = d.name.slice(0, 10) || ('P' + (i + 1)); if (p) p.setName(s.name); } this.broadcastLobby(); break;
+      case 'pi': this.sendOn(c, { k: 'po', t: d.t }); break;
+      case 'po': s.ping = Math.round(nowMs() - d.t); break;
+      case 'bye': this.closeConn(s.conn); this.closeConn(s.uconn); s.conn = s.uconn = null; this.markOff(s); break;
+    }
+  },
+  onHello(c, d) {
+    const cid = String(d.cid || '').slice(0, 40); if (!cid) return;
+    let s = this.slots.find(x => x.cid === cid && !x.host);
+    if (!s) {
+      if (this.slots.length < NET_CFG.maxPlayers) { s = { cid, name: '', ready: false, on: true, last: nowMs(), ping: 0 }; this.slots.push(s); if (this.inGame) this.addPlayer(this.slots.length - 1); }
+      else { const away = this.inGame && this.slots.find(x => !x.host && !x.on); if (away) { away.cid = cid; s = away; } }
+    }
+    if (!s) { this.sendOn(c, { k: 'full' }); setTimeout(() => this.closeConn(c), 400); return; }
+    if (s.conn && s.conn !== c) this.closeConn(s.conn);
+    s.conn = c; s.on = true; s.last = nowMs(); s.name = String(d.name || '').slice(0, 10) || s.name || ('P' + (this.slots.indexOf(s) + 1));
+    const i = this.slots.indexOf(s);
+    if (this.inGame && G.players[i]) { G.players[i].setAway(false); G.players[i].setName(s.name); }
+    this.sendOn(c, { k: 'welcome', code: this.code, inGame: this.inGame });
+    this.broadcastLobby();
+    if (this.inGame) this.sendOn(c, this.startMsg());
+    toastIf(`${s.name.toUpperCase()} ${this.inGame ? 'JOINED THE SHIFT' : 'IS IN THE LOBBY'}`);
+  },
+  markOff(s) {
+    if (!s.on) return; s.on = false;
+    const i = this.slots.indexOf(s), p = this.inGame ? G.players[i] : null;
+    if (p) { p.setAway(true); p.ix = p.iz = 0; p.target = null; }
+    toastIf(`${(s.name || 'A barista').toUpperCase()} ${this.inGame ? 'LOST CONNECTION — SLOT KEPT' : 'LEFT THE LOBBY'}`, 'warn');
+    if (!this.inGame) this.slots = this.slots.filter(x => x.host || x.on);
+    this.broadcastLobby();
+  },
+  hostDrop(c) {
+    const s = this.slotOf(c); if (!s) return;
+    if (s.uconn === c) { s.uconn = null; return; }
+    if (s.conn === c) { s.conn = null; this.closeConn(s.uconn); s.uconn = null; this.markOff(s); }
+  },
+  addPlayer(i) { const s = this.slots[i]; while (G.players.length <= i) { const k = G.players.length; G.players.push(new Player(k, this.slots[k] ? this.slots[k].name : '')); } G.nPlayers = G.players.length; HUD.layout(); return s; },
+  lobbyMsg() { return { k: 'lobby', code: this.code, mode: this.mode, theme: THEMES.indexOf(THEME), inGame: this.inGame, slots: this.slots.map(s => ({ h: hcid(s.cid), name: s.name, ready: !!s.ready, on: !!s.on, host: !!s.host, ping: s.ping || 0 })) }; },
+  broadcastLobby() { if (this.role !== 'host') return; this.sendRel(this.lobbyMsg()); this.updateScreen(); },
+  startMsg() { return { k: 'start', mode: G.mode, theme: THEMES.indexOf(THEME), code: this.code, ps: this.slots.map(s => ({ h: hcid(s.cid), name: s.name })) }; },
+  canStart() { return this.role === 'host' && !!this.code && this.slots.every(s => s.host || !s.on || s.ready); },
+  startGame() {
+    if (this.role !== 'host') return;
+    this.slots = this.slots.filter(s => s.host || s.on || this.inGame);
+    if (!this.inGame) this.slots = this.slots.filter(s => s.host || s.on);
+    G.mode = this.slots.length > 1 ? this.mode : 'coop';
+    this.screen = null; this._built = '';
+    newGame(this.slots.length, G.mode, this.slots.map(s => s.name));
+    this.inGame = true; this.fxq = []; this.seq = 0;
+    this.slots.forEach((s, i) => { if (!s.host && !s.on && G.players[i]) G.players[i].setAway(true); });
+    this.sendRel(this.startMsg());
+    HUD.layout();
+  },
+  snap() {
+    const v = LIVE.vanState;
+    return { k: 's', n: ++this.seq,
+      g: [G.state === 'paused' ? 'play' : G.state, G.day, r2(G.t), G.open ? 1 : 0, r2(G.cash), r2(G.rep), G.calm, G.calmBest, G.mode, G.ev ? G.ev.type : 0, r2(G.evT || 0), r2(G.nextDel)],
+      u: UPG.map(u => G.upg[u.id]), ul: [...G.unlocked],
+      ds: [DS.served, DS.lost, DS.revenue, DS.tips, DS.perfect, DS.spent, r2(DS.startCash), r2(DS.startRep)],
+      p: G.players.map(p => [r2(p.ch.pos.x), r2(p.ch.pos.z), r2(p.ch.yaw), p.pile.items.map(encI), p.name, p.away ? 1 : 0, p.stats.served, r2(p.stats.earned), p.stats.perfect, Math.round(p.stats.paid)]),
+      c: G.customers.map(c => [c.id, c.seed, r2(c.ch.pos.x), r2(c.ch.pos.z), r2(c.ch.yaw), c.state, c.slot, c.need.map(t => ITEM_KEYS.indexOf(t)), r2(c.pat), c.pile.items.map(encI)]),
+      q: G.queue.map(c => c.id),
+      s: STATIONS.map(s => [s.busy ? 1 : 0, r2(s.prog || 0), r2(s.heat || 0), r2(s.over || 0), s.state || '', Object.keys(s.inputs).map(k => s.inputs[k].items.map(encI)), s.out ? s.out.items.map(encI) : []]),
+      cp: CASHPILE.items.map(e => Math.round((e.v || 0) * 10)),
+      pd: PADS.map(u => Math.round(u.paid)), v: [v.mode, r2(v.x)], fx: this.fxq.splice(0) };
+  },
+  hostTick(dt) {
+    const t = nowMs();
+    if (this.inGame) {
+      if (t - this.snapAt >= 1000 / NET_CFG.snapHz - 4 && this.slots.some(s => !s.host && s.on)) {
+        this.snapAt = t;
+        const m = this.snap();
+        for (const s of this.slots) if (!s.host && s.on) { if (!this.sendOn(s.uconn, m)) this.sendOn(s.conn, m); }
+      } else if (t - this.snapAt >= 1000 / NET_CFG.snapHz) { this.snapAt = t; this.fxq.length = 0; }
+      this.slots.forEach((s, i) => { const p = G.players[i]; if (!s.host && p && s.lastIn && t - s.lastIn > 600) { p.ix = p.iz = 0; } });
+    }
+    if (t - this.pingAt > 2000) {
+      this.pingAt = t;
+      for (const s of this.slots) if (!s.host) { if (s.on && t - s.last > NET_CFG.lostMs) this.markOff(s); else if (s.on) this.sendOn(s.conn, { k: 'pi', t }); }
+      if (!this.inGame) this.broadcastLobby();
+    }
+  },
+
+  // ---------------------------------------------------------------- CLIENT
+  showJoin(code) { if (this.role !== 'solo') this.leave(); this.screen = 'join'; this.joinCode = cleanCode(code); this.status = ''; this._built = ''; this.renderScreen(); },
+  join(code) {
+    code = cleanCode(code); if (code.length !== 5) { this.setStatus('Room codes have 5 characters.'); return; }
+    this.leave(); this.role = 'client'; this.code = code; this.screen = 'lobby'; this.ready = false; this.tries = 0; this._built = '';
+    this.setStatus('Connecting to room ' + code + '…'); this.renderScreen();
+    this.loadLib().then(() => this.openClient()).catch(() => this.setStatus('Could not load the network library — check your connection.'));
+  },
+  openClient() {
+    if (this.role !== 'client') return;
+    const old = this.peer; if (old) { try { old.destroy(); } catch (e) {} }
+    const peer = new window.Peer(this.peerOpts()); this.peer = peer;
+    peer.on('open', () => { if (this.peer === peer) this.connectHost(); });
+    peer.on('disconnected', () => { if (this.peer === peer && this.role === 'client') setTimeout(() => { if (this.peer === peer && !peer.destroyed) { try { peer.reconnect(); } catch (e) {} } }, 1200); });
+    peer.on('error', (err) => {
+      if (this.peer !== peer) return; const t = err && err.type;
+      if (t === 'peer-unavailable') { this.setStatus(this.inGame ? 'Host unreachable — retrying…' : 'Room ' + this.code + ' not found — check the code.'); if (!this.inGame && !this.lobby) return; }
+      else this.setStatus('Network: ' + (t || 'error') + (t === 'browser-incompatible' ? ' — this browser has no WebRTC' : ''));
+      this.retryAt = nowMs() + NET_CFG.retryMs;
+    });
+  },
+  connectHost() {
+    if (this.role !== 'client' || !this.peer) return;
+    this.closeConn(this.conn); this.closeConn(this.uconn); this.conn = this.uconn = null;
+    const cid = myCid(), c = this.peer.connect(NET_CFG.prefix + this.code, { reliable: true, serialization: 'json', metadata: { cid, ch: 'r' } });
+    this.conn = c; this.connAt = nowMs();
+    c.on('open', () => {
+      if (this.conn !== c) return;
+      this.lastRx = nowMs(); this.tries = 0;
+      this.sendOn(c, { k: 'hello', cid, name: myName(), v: 1 });
+      const u = this.peer.connect(NET_CFG.prefix + this.code, { reliable: false, serialization: 'json', metadata: { cid, ch: 'u' } });
+      this.uconn = u; u.on('data', (d) => { if (this.uconn === u) this.clientMsg(d); }); u.on('close', () => { if (this.uconn === u) this.uconn = null; });
+    });
+    c.on('data', (d) => { if (this.conn === c) this.clientMsg(d); });
+    c.on('close', () => { if (this.conn === c && !c._dead) this.clientLost('Link closed'); });
+    c.on('error', () => { if (this.conn === c) this.clientLost('Link error'); });
+  },
+  clientLost(why) {
+    if (this.role !== 'client' || this.closed) return;
+    this.closeConn(this.conn); this.closeConn(this.uconn); this.conn = this.uconn = null; this.setStatus(why + ' — reconnecting…'); this.retryAt = nowMs() + 1000;
+    if (this.inGame) toast('CONNECTION LOST — RECONNECTING', 'warn');
+  },
+  retry() {
+    this.tries++; this.retryAt = nowMs() + NET_CFG.retryMs;
+    this.setStatus(`Reconnecting to ${this.code}… (try ${this.tries})`);
+    this.closeConn(this.conn); this.closeConn(this.uconn); this.conn = this.uconn = null;
+    if (!this.peer || this.peer.destroyed) this.openClient();
+    else if (this.peer.disconnected) { try { this.peer.reconnect(); } catch (e) { this.openClient(); } }
+    else this.connectHost();
+  },
+  clientMsg(d) {
+    if (!d || typeof d !== 'object') return;
+    this.lastRx = nowMs();
+    switch (d.k) {
+      case 's': if (this.inGame) this.applySnap(d); break;
+      case 'welcome': this.setStatus(d.inGame ? 'Joining the shift…' : 'Connected — tap Ready when you are.'); break;
+      case 'lobby': this.lobby = d; this.code = d.code || this.code; G.mode = d.mode; if (THEMES[d.theme] && THEMES[d.theme] !== THEME) setTheme(d.theme); this.findMe(d.slots); if (!this.inGame) { this.screen = 'lobby'; this.updateScreen(); } break;
+      case 'start': this.clientStart(d); break;
+      case 'theme': if (THEMES[d.i]) setTheme(d.i); break;
+      case 'mode': G.mode = d.m; break;
+      case 'sum': this.clientSummary(d); break;
+      case 'pi': this.sendOn(this.conn, { k: 'po', t: d.t }); break;
+      case 'po': this.ping = Math.round(nowMs() - d.t); break;
+      case 'full': this.closed = true; this.setStatus('Room is full (4 baristas).'); break;
+      case 'bye': this.closed = true; const wasIn = this.inGame; this.leave(); toTitle(); toast('THE HOST CLOSED THE ROOM', 'warn'); if (wasIn) { } break;
+    }
+  },
+  findMe(slots) { const h = hcid(myCid()); const i = slots.findIndex(s => s.h === h); if (i >= 0) this.me = i; },
+  clientStart(d) {
+    this.inGame = true; this.screen = null; this._built = ''; this.synced = false;
+    clearRun(); this.cust.clear();
+    G.mode = d.mode; if (THEMES[d.theme] && THEMES[d.theme] !== THEME) setTheme(d.theme);
+    d.ps.forEach((p, i) => G.players.push(new Player(i, p.name)));
+    this.findMe(d.ps); G.nPlayers = G.players.length;
+    Object.assign(G, { state: 'play', day: 1, cash: 0, rep: 3, calm: 0, calmBest: 0, camMode: 0, open: true, t: 0 });
+    for (const k in G.upg) G.upg[k] = 0;
+    DS = DAYSTAT(); refreshPads();
+    $('title').classList.add('hidden'); $('hud').classList.remove('hidden'); $('summary').classList.add('hidden'); $('panel').classList.add('hidden');
+    $('camLbl').textContent = CAM_MODES[0]; CAM.azT = .62; CAM.elT = .86; CAM.zoom = 1;
+    buildZones(); HUD.layout(); HUD.cashShown = 0; HUD.ordersDirty = true;
+    toast(`ROOM ${this.code} — YOU ARE ${(myPlayer() ? myPlayer().name : 'P' + (this.me + 1)).toUpperCase()}`, 'acc');
+  },
+  clientSummary(d) {
+    DS = Object.assign(DAYSTAT(), d.ds); G.day = d.day; G.cash = d.cash; G.rep = d.rep; G.calmBest = d.calmBest;
+    d.ps.forEach((s, i) => { if (G.players[i]) G.players[i].stats = s; });
+    G.state = 'summary'; $('panel').classList.add('hidden'); UI.summary(d.o); SFX.jingle(d.o.met && !d.o.over);
+  },
+  syncPile(P, arr, fromFn) {
+    const it = P.items; let k = 0;
+    while (k < it.length && k < arr.length && encI(it[k]) === arr[k]) k++;
+    if (k < it.length) it.length = k;
+    for (let i = k; i < arr.length; i++) { const d = decI(arr[i]); if (!d[0]) continue; P.add(d[0], d[1], fromFn ? fromFn(d[0]) : null); }
+  },
+  pushSample(o, x, z, yaw) { const ns = o.ns || (o.ns = []); ns.push({ t: nowMs(), x, z, yaw }); if (ns.length > 6) ns.shift(); },
+  sampleAt(o, rt) {
+    const ns = o.ns; if (!ns || !ns.length) return null;
+    if (rt <= ns[0].t || ns.length === 1) return ns[0];
+    for (let i = ns.length - 1; i >= 0; i--) if (ns[i].t <= rt) {
+      const a = ns[i], b = ns[i + 1]; if (!b) return a;
+      const k = clamp((rt - a.t) / Math.max(1, b.t - a.t), 0, 1); let dy = b.yaw - a.yaw; dy = Math.atan2(Math.sin(dy), Math.cos(dy));
+      return { x: lerp(a.x, b.x, k), z: lerp(a.z, b.z, k), yaw: a.yaw + dy * k };
+    }
+    return ns[0];
+  },
+  applySnap(m) {
+    if (m.n && this.lastSeq && m.n < this.lastSeq && this.lastSeq - m.n < 1000) return; // stale out-of-order snapshot
+    this.lastSeq = m.n || 0;
+    this.applying = true;
+    try {
+      const g = m.g, prev = G.state;
+      G.state = g[0]; if (prev === 'summary' && G.state === 'play') $('summary').classList.add('hidden');
+      G.day = g[1]; G.t = g[2]; G.open = !!g[3]; G.cash = g[4]; G.rep = g[5]; G.calm = g[6]; G.calmBest = g[7]; G.mode = g[8];
+      if (g[9] && (!G.ev || G.ev.type !== g[9])) { G.ev = { type: g[9] }; HUD.event(EVENTS[g[9]].name, EVENTS[g[9]].sub); }
+      else if (!g[9] && G.ev) { G.ev = null; HUD.event(null); }
+      G.evT = g[10]; G.nextDel = g[11];
+      UPG.forEach((u, i) => { G.upg[u.id] = m.u[i] | 0; });
+      for (const id of m.ul) if (!G.unlocked.has(id)) { const u = PADS.find(x => x.id === id); if (u) unlock(u, null, !this.synced); }
+      PADS.forEach((u, i) => { if (!u.done) u.paid = m.pd[i] || 0; });
+      refreshPads();
+      Object.assign(DS, { served: m.ds[0], lost: m.ds[1], revenue: m.ds[2], tips: m.ds[3], perfect: m.ds[4], spent: m.ds[5], startCash: m.ds[6], startRep: m.ds[7] });
+      // baristas
+      m.p.forEach((a, i) => {
+        let p = G.players[i]; if (!p) { p = new Player(i, a[4]); G.players.push(p); G.nPlayers = G.players.length; HUD.layout(); }
+        p.setName(a[4]); p.setAway(!!a[5]);
+        p.stats.served = a[6]; p.stats.earned = a[7]; p.stats.perfect = a[8]; p.stats.paid = a[9];
+        this.pushSample(p, a[0], a[1], a[2]);
+        if (!this.synced || i !== this.me) { if (!p.ns || p.ns.length <= 1 || !this.synced) { p.ch.pos.x = a[0]; p.ch.pos.z = a[1]; p.ch.yaw = a[2]; } }
+        const px = p.ch.pos.x, pz = p.ch.pos.z;
+        this.syncPile(p.pile, a[3], () => this.nearStation(px, pz));
+      });
+      // guests
+      const seen = new Set();
+      for (const a of m.c) {
+        const id = a[0]; seen.add(id);
+        let c = this.cust.get(id);
+        if (!c) { c = new Customer(a[1]); c.id = id; c.ch.pos.set(a[2], 0, a[3]); c.ch.yaw = a[4]; c.path = []; c.ns = []; this.cust.set(id, c); G.customers.push(c); if (a[5] === 'sit') c.ch.sit = 1; }
+        c.state = a[5]; c.slot = a[6]; c.pat = a[8];
+        const need = a[7].map(k => ITEM_KEYS[k]);
+        if (need.join() !== c.need.join()) { c.need = need; c.redrawBubble(); }
+        this.pushSample(c, a[2], a[3], a[4]);
+        this.syncPile(c.pile, a[9], () => NETV.set(REGISTER.x, CT + .2, -1.2));
+      }
+      for (const [id, c] of this.cust) if (!seen.has(id)) { c.dispose(); this.cust.delete(id); const k = G.customers.indexOf(c); if (k >= 0) G.customers.splice(k, 1); }
+      const q = m.q.map(id => this.cust.get(id)).filter(Boolean);
+      if (q.length !== G.queue.length || q.some((c, i) => c !== G.queue[i])) { G.queue = q; HUD.ordersDirty = true; }
+      // stations
+      STATIONS.forEach((s, i) => {
+        const a = m.s[i]; if (!a) return;
+        s.busy = !!a[0]; s.prog = a[1]; s.heat = a[2]; s.over = a[3]; s.state = a[4];
+        Object.keys(s.inputs).forEach((k, j) => this.syncPile(s.inputs[k], a[5][j] || [], () => this.nearHand(s)));
+        if (s.out) this.syncPile(s.out, a[6], () => s.kind === 'source' ? (LIVE.vanState.mode === 'drop' ? NETV.set(-1.5 + rnd(), 1.8, 12.2) : null) : NETV.set(s.x + (rnd() - .5) * .2, CT + .4, BZ + .3));
+      });
+      // tray
+      const cp = m.cp, CP = CASHPILE.items;
+      if (CP.length > cp.length) CP.length = cp.length;
+      for (let i = 0; i < cp.length; i++) { if (CP[i]) CP[i].v = cp[i] / 10; else CASHPILE.add('cash', 0, NETV.set(REGISTER.x, 1.6, -.3), cp[i] / 10); }
+      const v = LIVE.vanState; if (v.mode !== m.v[0]) v.mode = m.v[0]; v.tx = m.v[1]; if (v.mode === 'in' && v.x > m.v[1] + 20) v.x = m.v[1];
+    } finally { this.applying = false; }
+    for (const f of m.fx || []) this.playFx(f);
+    this.synced = true;
+  },
+  playFx(f) {
+    const [t, a] = f;
+    try {
+      if (t === 't') toast(a[0], a[1]);
+      else if (t === 'f') floatText(a[0], a[1], a[2], a[3], a[4], a[5]);
+      else if (t === 's' && SFX[a[0]]) SFX_RAW[a[0]](...a.slice(1));
+      else if (t === 'p' && PFX_RAW[a[0]]) PFX_RAW[a[0]](...a.slice(1));
+    } catch (e) {}
+  },
+  nearStation(x, z) { let b = null, bd = 2.6; for (const s of STATIONS) { if (!s.unlocked) continue; const d = Math.hypot(x - s.zone.x, z - s.zone.z); if (d < bd) { bd = d; b = s; } } return b ? NETV.set(b.x, CT + .5, b.group.position.z + .3) : null; },
+  nearHand(s) { let b = null, bd = 2.6; for (const p of G.players) { const d = Math.hypot(p.ch.pos.x - s.zone.x, p.ch.pos.z - s.zone.z); if (d < bd) { bd = d; b = p; } } return b ? b.ch.handPos(NETV, .3) : null; },
+  clientFrame(dt) {
+    const rt = nowMs() - NET_CFG.interp;
+    G.t += dt;
+    G.players.forEach((p, i) => {
+      if (i === this.me) {
+        p.move(dt); // client-side prediction with the same movement code as the host
+        const ns = p.ns, sv = ns && ns[ns.length - 1];
+        if (sv) {
+          const ex = sv.x - p.ch.pos.x, ez = sv.z - p.ch.pos.z, e = Math.hypot(ex, ez), moving = Math.hypot(p.ix, p.iz) > .05 || !!p.target;
+          if (e > 2.2) { p.ch.pos.x = sv.x; p.ch.pos.z = sv.z; }
+          else if (!moving && e > .03) { const k = 1 - Math.exp(-5 * dt); p.ch.pos.x += ex * k; p.ch.pos.z += ez * k; }
+          else if (e > .9) { const k = 1 - Math.exp(-1.5 * dt); p.ch.pos.x += ex * k; p.ch.pos.z += ez * k; }
+        }
+      } else {
+        const s = this.sampleAt(p, rt);
+        if (s) {
+          const ox = p.ch.pos.x, oz = p.ch.pos.z; p.ch.pos.x = s.x; p.ch.pos.z = s.z;
+          const ivx = (s.x - ox) / Math.max(dt, 1e-3), ivz = (s.z - oz) / Math.max(dt, 1e-3);
+          p.vx = damp(p.vx, Math.abs(ivx) < 12 ? ivx : 0, 12, dt); p.vz = damp(p.vz, Math.abs(ivz) < 12 ? ivz : 0, 12, dt);
+        }
+      }
+      p.visuals(dt);
+    });
+    for (const c of G.customers) {
+      const s = this.sampleAt(c, rt); let spd = 0;
+      if (s) {
+        const ox = c.ch.pos.x, oz = c.ch.pos.z; c.ch.pos.x = s.x; c.ch.pos.z = s.z;
+        let dy = s.yaw - c.ch.yaw; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); c.ch.yaw += dy * Math.min(1, dt * 12);
+        const v = Math.hypot(s.x - ox, s.z - oz) / Math.max(dt, 1e-3); c._spd = damp(c._spd || 0, v < 6 ? v : 0, 10, dt); spd = c._spd > .25 ? c._spd : 0;
+      }
+      c.visuals(dt, spd);
+    }
+    for (const s of STATIONS) if (s.unlocked) animStation(s, dt, true);
+    animModules(dt);
+    const v = LIVE.vanState, gv = LIVE.van;
+    if (v.tx !== undefined) v.x = Math.abs(v.tx - v.x) > 25 ? v.tx : damp(v.x, v.tx, 6, dt);
+    gv.position.x = v.x; gv.visible = v.mode !== 'off';
+    // input stream to the host
+    const me = myPlayer(), tn = nowMs();
+    if (me && tn - this.inAt >= 1000 / NET_CFG.inputHz - 4) {
+      this.inAt = tn;
+      const x = r2(me.ix), z = r2(me.iz), same = this.lastIn && this.lastIn[0] === x && this.lastIn[1] === z;
+      if (!same || nowMs() - (this.lastInT || 0) > 200) { this.sendFast({ k: 'i', x, z }); this.lastIn = [x, z]; this.lastInT = nowMs(); }
+    }
+  },
+  clientTick(dt) {
+    const t = nowMs();
+    if (this.closed) return;
+    const linked = this.conn && this.conn.open;
+    if (linked) {
+      if (t - this.pingAt > 2000) { this.pingAt = t; this.sendOn(this.conn, { k: 'pi', t }); }
+      if (t - this.lastRx > NET_CFG.lostMs) this.clientLost('No data for 8 s');
+    } else if (this.conn && !this.conn.open && t - this.connAt > 15000) {
+      this.setStatus('No peer-to-peer link yet — strict networks may need a TURN relay. Retrying…'); this.retryAt = t + 500; this.closeConn(this.conn); this.conn = null;
+    } else if (!this.conn && this.retryAt && t > this.retryAt) this.retry();
+  },
+  tick(dt) { if (this.role === 'host') this.hostTick(dt); else if (this.role === 'client') this.clientTick(dt); },
+
+  // ---------------------------------------------------------------- HUD chips
+  hudUpdate() {
+    const el = $('plist'); if (!el) return;
+    if (this.role === 'solo') { if (el.innerHTML) el.innerHTML = ''; return; }
+    const best = Math.max(0, ...G.players.map(p => G.mode === 'versus' ? p.stats.earned : p.stats.served));
+    const linked = this.role === 'host' || (this.conn && this.conn.open);
+    const net = this.role === 'host' ? `HOST · ${this.code} · ${this.slots.filter(s => s.on).length}/${NET_CFG.maxPlayers}` : linked ? `${this.code} · ${this.ping || '—'} ms` : 'RECONNECTING…';
+    const html = `<div class="pc net ${linked ? '' : 'bad'}"><i></i>${net}</div>` + G.players.map((p, i) => {
+      const v = G.mode === 'versus' ? fmtCash(p.stats.earned) : p.stats.served + ' served', star = G.mode === 'versus' && best > 0 && p.stats.earned === best ? ' ★' : '';
+      return `<div class="pc ${i === this.me ? 'me' : ''} ${p.away ? 'away' : ''}"><i style="background:${p.color}"></i>${esc(p.name)}${i === this.me ? ' · YOU' : ''}<span class="s num">${p.away ? 'AWAY' : v + star}</span></div>`; }).join('');
+    if (el._h !== html) { el._h = html; el.innerHTML = html; }
+  },
+
+  // ---------------------------------------------------------------- LOBBY / JOIN screens (Swiss card in #title)
+  renderScreen(force) {
+    const T = $('title'); if (!this.screen) return;
+    const key = this.screen + ':' + this.role;
+    if (!force && this._built === key) { this.updateScreen(); return; }
+    this._built = key;
+    if (this.screen === 'join') {
+      T.innerHTML = `<div class="card lb">
+        <div class="tt"><div class="meta"><span>NRCC—ONLINE</span><span>JOIN A ROOM</span></div><div class="logo" style="font-size:34px">Join<br><b>a café</b></div></div>
+        <div class="lbl"><span class="ix">01</span><span class="k">Room code</span></div>
+        <input id="jCode" class="inp code" maxlength="5" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABCDE" value="${this.joinCode || ''}">
+        <div class="lbl"><span class="ix">02</span><span class="k">Your name</span></div>
+        <input id="jName" class="inp" maxlength="10" autocomplete="off" placeholder="Barista" value="${esc(myName())}">
+        <div class="seg" style="grid-template-columns:1fr 2fr;margin-top:12px"><button class="btn" data-back>Back</button><button class="btn primary" data-go>Join room</button></div>
+        <div class="k st" id="lbStatus" style="margin-top:10px;text-transform:none">${esc(this.status)}</div></div>`;
+      const ci = T.querySelector('#jCode'), ni = T.querySelector('#jName');
+      ci.addEventListener('input', () => { const v = cleanCode(ci.value); if (v !== ci.value) ci.value = v; });
+      ni.addEventListener('input', () => setMyName(ni.value));
+      const go = () => { setMyName(ni.value); this.join(ci.value); };
+      T.querySelector('[data-go]').onclick = go; ci.addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); });
+      T.querySelector('[data-back]').onclick = () => { this.leave(); UI.refreshTitle(); };
+    } else {
+      const host = this.role === 'host';
+      T.innerHTML = `<div class="card lb">
+        <div class="tt"><div class="meta"><span>NRCC—ONLINE</span><span>${host ? 'YOU HOST' : 'GUEST'}</span></div>
+        <div class="lbl" style="margin-top:4px"><span class="ix">→</span><span class="k">Room code</span></div><div class="lbcode num" id="lbCode">${this.code || '·····'}</div></div>
+        <div class="seg" style="grid-template-columns:2fr 1fr;margin-top:6px"><input id="lbLink" class="inp sm" readonly value=""><button class="btn" data-copy>Copy link</button></div>
+        <div class="lbl"><span class="ix">01</span><span class="k">Baristas · 1–4, one phone each</span></div>
+        <div id="lbSlots" class="slots"></div>
+        <div class="lbl"><span class="ix">02</span><span class="k">Your name</span></div>
+        <input id="lbName" class="inp" maxlength="10" autocomplete="off" placeholder="Barista" value="${esc(myName())}">
+        <div class="lbl"><span class="ix">03</span><span class="k">Scoring <span id="lbModeNote"></span></span></div>
+        <div class="seg" id="lbMode" style="grid-template-columns:1fr 1fr"><button class="btn" data-mode="coop">Co-op · shared goal</button><button class="btn" data-mode="versus">Versus · own score</button></div>
+        <div class="seg" style="grid-template-columns:1fr 2fr;margin-top:12px"><button class="btn" data-leave>Leave</button><button class="btn primary" id="lbGo">${host ? 'Start' : 'Ready'}</button></div>
+        <div class="k st" id="lbStatus" style="margin-top:8px;text-transform:none"></div></div>`;
+      const ni = T.querySelector('#lbName');
+      ni.addEventListener('input', () => { setMyName(ni.value); clearTimeout(this._nt); this._nt = setTimeout(() => this.pushName(), 250); });
+      T.querySelectorAll('[data-mode]').forEach(b => b.onclick = () => { if (!host) return; this.mode = b.dataset.mode; G.mode = this.mode; SFX.click(); this.broadcastLobby(); });
+      T.querySelector('[data-leave]').onclick = () => { this.leave(); UI.refreshTitle(); };
+      T.querySelector('[data-copy]').onclick = () => this.copyLink();
+      T.querySelector('#lbGo').onclick = () => { SFX.click(); if (host) { if (this.canStart()) this.startGame(); } else { this.ready = !this.ready; this.pushName(); this.updateScreen(); } };
+    }
+    this.updateScreen(); HUD.layout();
+  },
+  pushName() {
+    const n = myName();
+    if (this.role === 'host') { this.slots[0].name = n || 'Host'; this.broadcastLobby(); }
+    else if (this.role === 'client') this.sendRel({ k: 'ready', r: this.ready, name: n });
+  },
+  link() { return this.code ? location.origin + location.pathname + '?room=' + this.code : ''; },
+  copyLink() {
+    const l = this.link(); if (!l) return;
+    const done = () => toastIf('INVITE LINK COPIED');
+    if (navigator.share && /Mobi|Android|iPhone/i.test(navigator.userAgent)) { navigator.share({ title: 'No Rush Coffee Club', text: 'Join my café · room ' + this.code, url: l }).catch(() => {}); return; }
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(l).then(done, () => { const i = $('lbLink'); if (i) { i.select(); try { document.execCommand('copy'); done(); } catch (e) {} } });
+    else { const i = $('lbLink'); if (i) { i.select(); try { document.execCommand('copy'); done(); } catch (e) {} } }
+  },
+  updateScreen() {
+    const T = $('title'); if (!this.screen || T.classList.contains('hidden')) return;
+    const st = $('lbStatus'); if (st) st.textContent = this.status;
+    if (this.screen !== 'lobby') return;
+    const host = this.role === 'host';
+    const slots = host ? this.lobbyMsg().slots : (this.lobby ? this.lobby.slots : []);
+    const mode = host ? this.mode : (this.lobby ? this.lobby.mode : 'coop');
+    const code = this.code || '·····'; const c = $('lbCode'); if (c && c.textContent !== code) c.textContent = code;
+    const li = $('lbLink'); if (li && li.value !== this.link()) li.value = this.link();
+    const S = $('lbSlots');
+    if (S) {
+      const h = slots ? hcid(myCid()) : '';
+      let html = '';
+      for (let i = 0; i < NET_CFG.maxPlayers; i++) {
+        const s = slots[i];
+        if (!s) { html += `<div class="slot empty"><span class="ix">${pad2(i + 1)}</span><i style="background:${PLAYER_COLORS[i]}"></i><b>Open slot</b><span class="k">${i === slots.length ? 'share the code' : ''}</span></div>`; continue; }
+        const tag = s.host ? 'HOST' : !s.on ? 'OFFLINE' : s.ready ? 'READY' : 'NOT READY';
+        html += `<div class="slot ${s.on ? '' : 'off'} ${s.h === h ? 'me' : ''}"><span class="ix">${pad2(i + 1)}</span><i style="background:${PLAYER_COLORS[i]}"></i><b>${esc(s.name || 'P' + (i + 1))}${s.h === h ? ' · you' : ''}</b><span class="k">${tag}${!s.host && s.on && s.ping ? ' · ' + s.ping + ' ms' : ''}</span></div>`;
+      }
+      if (S._h !== html) { S._h = html; S.innerHTML = html; }
+    }
+    document.querySelectorAll('#lbMode [data-mode]').forEach(b => { b.classList.toggle('on', b.dataset.mode === mode); b.disabled = !host; });
+    const mn = $('lbModeNote'); if (mn) mn.textContent = host ? '· you choose' : '· host chooses';
+    const go = $('lbGo');
+    if (go) {
+      if (host) { const ok = this.canStart(), n = slots.filter(s => s.on).length; go.disabled = !ok; go.style.opacity = ok ? 1 : .45; go.textContent = !this.code ? 'Opening room…' : ok ? `Start · ${n} barista${n > 1 ? 's' : ''}` : 'Waiting for ready…'; }
+      else { const linked = this.conn && this.conn.open; go.disabled = !linked; go.style.opacity = linked ? 1 : .45; go.textContent = this.ready ? 'Ready ✓ — tap to cancel' : 'Ready'; go.classList.toggle('primary', !this.ready); }
+    }
+  },
+});
+function toastIf(t, k) { if (!$('title').classList.contains('hidden') && NET.screen) NET.setStatus(t.charAt(0) + t.slice(1).toLowerCase()); else toast(t, k); }
+// host-side fx relay: sounds + celebratory particles fire on every device
+const SFX_RAW = {}, PFX_RAW = {};
+['pick', 'drop', 'serve', 'coin', 'cash', 'unlock', 'buzz', 'angry', 'alert', 'bell', 'horn', 'ding', 'machine'].forEach((k) => {
+  const f = SFX[k]; SFX_RAW[k] = f.bind(SFX);
+  SFX[k] = function (...a) { if (NET.applying) return; if (NET.role === 'host' && NET.inGame) NET.fx('s', [k, ...a]); return f.apply(SFX, a); };
+});
+['hearts', 'confetti'].forEach((k) => {
+  const f = PFX[k]; if (!f) return; PFX_RAW[k] = f.bind(PFX);
+  PFX[k] = function (...a) { if (NET.applying) return; if (NET.role === 'host' && NET.inGame) NET.fx('p', [k, ...a.map(v => typeof v === 'number' ? r2(v) : v)]); return f.apply(PFX, a); };
+});
+
+// =============================================================================
+// 30  HOW TO PLAY — short, skippable Swiss-style onboarding (auto on first launch)
+// =============================================================================
+const TUT = {
+  i: 0, open_: false, done: null,
+  steps() {
+    const I = (t, s = 44) => `<img src="${ICON_URL[t]}" width="${s}" height="${s}" alt="">`;
+    const arrow = `<svg width="34" height="14" viewBox="0 0 34 14"><path d="M0 7h28M22 1l7 6-7 6" fill="none" stroke="currentColor" stroke-width="2.5"/></svg>`;
+    const flow = (...a) => `<div class="tflow">${a.join(arrow)}</div>`;
+    const box = (txt, cls = '') => `<div class="tbox ${cls}">${txt}</div>`;
+    return [
+      { k: 'Move', t: 'Drag to walk', d: 'Touch anywhere and drag — a joystick appears under your thumb. Tap a machine to walk there. Desktop: WASD or arrows.',
+        a: `<svg viewBox="0 0 160 120" width="170" height="128"><circle cx="80" cy="64" r="42" fill="none" stroke="currentColor" stroke-opacity=".25" stroke-width="3"/><circle cx="104" cy="48" r="20" fill="var(--accent)"/><path d="M80 64L104 48" stroke="var(--accent)" stroke-width="3" stroke-dasharray="4 4"/><path d="M80 14v-8M80 114v-8M30 64h-8M130 64h8" stroke="currentColor" stroke-width="3"/></svg>` },
+      { k: 'Gather', t: 'Grab beans', d: 'Stand still at the BEANS rack for a beat — your barista stacks a pile on the back rack. Stacks are capped, so plan trips.',
+        a: flow(box(I('beans') + '<small>BEANS RACK</small>'), `<div class="tstack">${I('beans', 30)}${I('beans', 30)}${I('beans', 30)}</div>`) },
+      { k: 'Process', t: 'Grind', d: 'Walk into the GRINDER zone: beans drop in automatically, fresh grounds come out. Pick them up when it shows READY.',
+        a: flow(I('beans'), box('GRINDER', 'acc'), I('grounds')) },
+      { k: 'Brew', t: 'Pull a shot', d: 'Load GROUNDS + a CUP into the ESPRESSO machine. Brewing in the green heat band = PERFECT. Too hot = burnt, then a cooldown.',
+        a: flow(`<div class="tstack">${I('grounds', 34)}${I('cup', 34)}</div>`, box('ESPRESSO', 'acc'), I('espresso')) + `<div class="theat"><i style="background:#7fb2ff"></i><i style="background:#1fae5b;flex:2"></i><i style="background:var(--warn)"></i></div><div class="k" style="text-align:center;margin-top:4px">COLD · PERFECT · BURNT</div>` },
+      { k: 'Serve', t: 'Serve at the register', d: 'Carry drinks to the REGISTER. The guest at the front takes what they ordered. Their ring shows patience — green, amber, red.',
+        a: flow(I('espresso'), box('REGISTER', 'acc'), `<svg width="54" height="54" viewBox="0 0 54 54"><circle cx="27" cy="27" r="22" fill="none" stroke="currentColor" stroke-opacity=".2" stroke-width="6"/><path d="M27 5a22 22 0 1 1-19 33" fill="none" stroke="#1fae5b" stroke-width="6" stroke-linecap="round"/></svg>`) },
+      { k: 'Cash', t: 'Collect the cash', d: 'Guests pay onto the TRAY next to the register. Walk over it to sweep the money into the drawer.',
+        a: flow(box('TRAY'), `<div class="tstack">${I('cash', 34)}${I('cash', 34)}${I('cash', 34)}</div>`, box('$', 'acc big')) },
+      { k: 'Expand', t: 'Unlock pads', d: 'Stand on an orange floor pad to pay into it: a milk steamer, seating, a water tower, pastries, a second espresso machine.',
+        a: `<div class="tpad"><b>$30</b><small>UNLOCK · MILK STEAMER</small></div>` },
+      { k: 'No rush', t: 'Calm pays better', d: 'Perfect shots, short waits and no burnt coffee build a CALM streak — each step adds +5% tips. Rushing breaks it.',
+        a: `<div class="tcalm"><span class="k">CALM</span><b>×1.25</b><div class="tbar">${'<i></i>'.repeat(5)}${'<i class="off"></i>'.repeat(5)}</div></div>` },
+      { k: 'Play', t: 'Themes & friends', d: 'Switch the design language anytime with 1–4. Host online and share the 5-letter code: up to 4 baristas, one phone each.',
+        a: `<div class="tthemes">${THEMES.map((th, i) => `<div style="background:${th.ui.bg || '#fff'};border-color:${th.ui.line || '#ccc'}"><i style="background:${th.ui.accent}"></i><span style="color:${th.ui.fg || '#111'}">${i + 1}</span></div>`).join('')}</div><div class="tplayers">${PLAYER_COLORS.map(c => `<i style="background:${c}"></i>`).join('')}</div>` },
+    ];
+  },
+  open(done) {
+    this.done = done || null; this.i = 0; this.open_ = true;
+    let el = $('tut'); el.classList.remove('hidden'); this.render();
+  },
+  close(skipped) {
+    this.open_ = false; $('tut').classList.add('hidden'); lsSet('nrcc_tut_v1', 'done');
+    const d = this.done; this.done = null; clock.getDelta(); if (d) d(skipped);
+  },
+  go(k) { const n = this.steps().length; const j = this.i + k; if (j >= n) { SFX.click(); this.close(false); return; } this.i = clamp(j, 0, n - 1); SFX.click(); this.render(); },
+  render() {
+    const S = this.steps(), s = S[this.i], n = S.length, last = this.i === n - 1;
+    $('tut').innerHTML = `<div class="card tcard">
+      <div class="thead"><span class="k">How to play · <b class="num">${pad2(this.i + 1)}</b> / ${pad2(n)}</span><button class="btn tskip" data-skip>Skip</button></div>
+      <div class="tgrid"><div class="tart">${s.a}</div>
+      <div class="ttext"><div class="lbl" style="margin-top:0"><span class="ix">${pad2(this.i + 1)}</span><span class="k">${s.k}</span></div><h2>${s.t}</h2><p>${s.d}</p></div></div>
+      <div class="tdots">${S.map((_, j) => `<i class="${j === this.i ? 'on' : j < this.i ? 'past' : ''}"></i>`).join('')}</div>
+      <div class="seg" style="grid-template-columns:1fr 2fr;margin-top:10px"><button class="btn" data-prev ${this.i ? '' : 'disabled style="opacity:.4"'}>Back</button><button class="btn primary" data-next>${last ? 'Let’s brew' : 'Next'}</button></div></div>`;
+    const T = $('tut');
+    T.querySelector('[data-skip]').onclick = (e) => { e.stopPropagation(); SFX.click(); this.close(true); };
+    T.querySelector('[data-next]').onclick = (e) => { e.stopPropagation(); this.go(1); };
+    T.querySelector('[data-prev]').onclick = (e) => { e.stopPropagation(); if (this.i) this.go(-1); };
+    const c = T.querySelector('.tcard'); let sx = null;
+    c.addEventListener('pointerdown', (e) => { sx = e.clientX; });
+    c.addEventListener('pointerup', (e) => { if (sx === null) return; const dx = e.clientX - sx; sx = null; if (Math.abs(dx) > 60 && !e.target.closest('button')) this.go(dx < 0 ? 1 : -1); });
+  },
+  key(e) {
+    if (!this.open_) return false;
+    if (e.code === 'ArrowRight' || e.code === 'Enter' || e.code === 'Space') this.go(1);
+    else if (e.code === 'ArrowLeft') { if (this.i) this.go(-1); }
+    else if (e.code === 'Escape') this.close(true);
+    e.preventDefault(); return true;
+  },
+};
+window.addEventListener('keydown', (e) => { if (TUT.open_) { TUT.key(e); e.stopImmediatePropagation(); } }, true);
 
 // =============================================================================
 // 26  RUN LIFECYCLE
@@ -2793,12 +3488,12 @@ function clearRun() {
   const fill = (id, n) => { const s = SBY[id]; for (let i = 0; i < n; i++) s.out.add(s.outT, 0); };
   fill('beans', 10); fill('cups', 16); fill('milk', 8);
 }
-function newGame(n, mode) {
+function newGame(n, mode, names) {
   clearRun();
   Object.assign(G, { nPlayers: n, mode: n === 1 ? 'coop' : mode, day: 1, cash: 0, rep: 3.0, calm: 0, calmBest: 0, ticket: 0, tutorial: true, state: 'play', camMode: 0, debtDays: 0 });
   for (const k in G.upg) G.upg[k] = 0;
   for (const s of ['beans', 'cups', 'milk']) SBY[s].out.cap = Math.round(SBY[s].stockCap * 1.33);
-  for (let i = 0; i < n; i++) G.players.push(new Player(i));
+  for (let i = 0; i < n; i++) G.players.push(new Player(i, names && names[i]));
   refreshPads();
   $('title').classList.add('hidden'); $('hud').classList.remove('hidden'); $('summary').classList.add('hidden'); $('panel').classList.add('hidden');
   $('camLbl').textContent = CAM_MODES[0]; CAM.azT = .62; CAM.elT = .86; CAM.zoom = 1;
@@ -2878,7 +3573,8 @@ function frame() {
   const t0 = performance.now();
   const rdt = Math.min(clock.getDelta(), .05);
   const dt = rdt * G.speed;
-  if (G.state === 'play') { readInputs(); updateGame(dt); }
+  NET.tick(rdt);
+  if (G.state === 'play') { readInputs(); if (NET.role === 'client') NET.clientFrame(dt); else updateGame(dt); }
   else if (G.state === 'title') {
     for (const p of G.players) { p.ch.carrying = p.pile.items.length > 0; p.ch.update(dt, 0, 4); let y = 0; for (const e of p.pile.items) { e.cy = y; y += ITEM[e.t].h; } }
     for (const c of G.customers) { if (c.state === 'walk' || c.state === 'queue') c.pat = 1; c.update(dt); }
@@ -2903,7 +3599,7 @@ function onResize() {
   renderer.setSize(w, h, false); camera.aspect = w / h;
   camera.fov = w < h ? 34 : 30; camera.updateProjectionMatrix();
   PFX.setScale(renderer.domElement.height);
-  if (G.state === 'play' || G.state === 'paused') buildZones();
+  if (G.state === 'play' || G.state === 'paused' || G.state === 'summary') buildZones();
   HUD.layout();
 }
 window.addEventListener('resize', onResize);
@@ -2921,10 +3617,15 @@ if (QS.has('theme')) th0 = +QS.get('theme') - 1;
 setTheme(th0);
 onResize();
 toTitle();
+{ // first launch → How to play; ?room=CODE → join screen pre-filled
+  const room = cleanCode(QS.get('room') || '');
+  const after = () => { if (room) NET.showJoin(room); };
+  if (lsGet('nrcc_tut_v1', '') !== 'done') TUT.open(after); else after();
+}
 requestAnimationFrame(() => { $('fade').style.opacity = 0; });
 frame();
 // test / debug hook (harmless in production)
-window.__nrcc = { G, STATIONS, SBY, PADS, CAM, UI, INPUT, CASHPILE, newGame, setTheme, endDay, toTitle, buyUpgrade, renderer, scene, PERF, THEMES,
+window.__nrcc = { NET, TUT, G, STATIONS, SBY, PADS, CAM, UI, INPUT, CASHPILE, newGame, setTheme, endDay, toTitle, buyUpgrade, renderer, scene, PERF, THEMES,
   give: (n) => { G.cash += n; }, camera,
   proj: (x, y, z) => { const v = new THREE.Vector3(x, y, z).project(camera); return [(v.x + 1) / 2 * innerWidth, (1 - v.y) / 2 * innerHeight]; },
   state: () => ({ st: G.state, day: G.day, t: +G.t.toFixed(1), cash: +G.cash.toFixed(1), rep: +G.rep.toFixed(2), served: DS.served, lost: DS.lost, queue: G.queue.length, tray: CASHPILE.items.length,
