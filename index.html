@@ -141,9 +141,6 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);overscroll
 .joy .kn{position:absolute;left:50%;top:50%;width:48px;height:48px;margin:-24px 0 0 -24px;border-radius:50%;
   box-shadow:0 4px 10px rgba(0,0,0,.25),inset 0 -4px 8px rgba(0,0,0,.18);border:2px solid #fff;}
 .joy.idle{opacity:.38;} .zone.multi .joy.idle{opacity:.28;}
-#hud.mp3 #side{display:none;} #hud.mp3 #orders{flex-direction:row;left:50%;transform:translateX(-50%);width:auto;}
-#hud.mp3 #orders .tk{width:92px;}
-@media (orientation:landscape){ #hud.mp3 #orders .tk{width:78px;padding:4px 6px;} #hud.mp3 #orders .tk .ti img{width:16px;height:16px;} #hud.mp3 #orders .tk .ti{min-height:16px;margin-top:2px;} }
 /* overlays */
 .ov{position:absolute;inset:0;pointer-events:auto;display:flex;align-items:center;justify-content:center;
   padding:calc(var(--sat) + 16px) calc(var(--sar) + 16px) calc(var(--sab) + 16px) calc(var(--sal) + 16px);}
@@ -273,6 +270,47 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);overscroll
   .card.lb .inp{padding:7px 10px;}
   .card.lb .inp.code{font-size:24px;}
 }
+
+/* ---- v3 compact HUD: essentials only, translucent, off the play area ---- */
+#top{display:flex;gap:4px;align-items:stretch;max-width:540px;grid-template-columns:none;}
+#top .cell{flex:1 1 0;min-width:0;padding:4px 7px 5px;background:color-mix(in srgb,var(--panel) 80%,transparent);box-shadow:0 4px 14px rgba(0,0,0,.05);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);}
+#top .cell .v{font-size:17px;margin-top:1px;}
+#top .cell .sub{font-size:8px;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+#top .cell .k{font-size:8px;}
+#top .stars{margin-top:2px;} #top .stars b{width:8px;}
+#top .bar{margin-top:3px;}
+#cBtns{display:flex!important;gap:4px;flex:none;grid-column:auto;padding:0;background:none;border:none;box-shadow:none;}
+#cBtns .btn.ib{width:44px;min-height:44px;padding:0;gap:1px;font-size:7px;background:color-mix(in srgb,var(--panel) 86%,transparent);}
+#goal{margin-top:4px;display:block;padding:5px 8px;max-width:540px;background:color-mix(in srgb,var(--fg) 86%,transparent);}
+#goal .gl{display:flex;align-items:center;gap:7px;min-width:0;}
+#goal #goalTxt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;}
+#goal .gp{flex:none;}
+#goal .go{display:flex;align-items:center;gap:6px;margin-top:4px;font-size:10px;font-weight:600;opacity:.95;}
+#goal .go .ok{color:var(--accent);font-size:11px;}
+#goal .go .ob{flex:1;max-width:120px;height:3px;background:rgba(255,255,255,.22);position:relative;border-radius:2px;overflow:hidden;}
+#goal .go .ob i{position:absolute;left:0;top:0;bottom:0;background:var(--accent);width:0;transition:width .25s;}
+#orders{flex-direction:row!important;width:auto!important;gap:3px!important;}
+#orders .tk{width:auto;min-width:36px;padding:3px 4px 4px;border-left-width:2px;background:color-mix(in srgb,var(--panel) 82%,transparent);}
+#orders .tk .tn{display:none;}
+#orders .tk .ti{margin-top:0;min-height:18px;gap:1px;}
+#orders .tk .ti img{width:18px;height:18px;}
+#orders .tk .ti b{font-size:9px!important;}
+#orders .tk .tb{margin-top:3px;height:2px;}
+.chip{position:absolute;right:calc(var(--sar) + var(--u));pointer-events:auto;display:flex;align-items:center;gap:5px;font-family:var(--font);font-size:10px;font-weight:800;color:var(--fg);
+  background:color-mix(in srgb,var(--panel) 82%,transparent);border:1px solid var(--line);border-radius:3px;padding:3px 6px;min-height:28px;letter-spacing:.04em;}
+.chip img{width:14px;height:14px;}
+.chip.warn{border-color:var(--warn);color:var(--warn);}
+.chip .cv{font-size:9px;opacity:.6;}
+#side{width:118px!important;}
+#side .rs{background:color-mix(in srgb,var(--panel) 90%,transparent);}
+#plist{gap:3px;}
+.pc{padding:2px 6px;font-size:8px;background:color-mix(in srgb,var(--panel) 82%,transparent);}
+@media (orientation:landscape){ #top{max-width:460px;} #goal{max-width:460px;} }
+@media (orientation:landscape) and (max-height:500px){ #top .cell .sub{display:block;} #top .cell .v{font-size:15px;} #cBtns .btn.ib{width:40px;min-height:40px;} }
+.troles{display:grid;grid-template-columns:1fr 1fr;gap:6px;width:100%;max-width:300px;}
+.troles div{background:var(--panel);border:1px solid var(--line);border-radius:3px;padding:6px;display:flex;flex-direction:column;gap:4px;font-size:10px;font-weight:700;}
+.troles b{color:#fff;font-size:8px;letter-spacing:.12em;padding:2px 4px;border-radius:2px;align-self:flex-start;}
+.troles i{height:3px;background:var(--line);position:relative;display:block;} .troles u{position:absolute;left:0;top:0;bottom:0;background:var(--accent);}
 </style>
 <script type="importmap">
 { "imports": {
@@ -286,27 +324,27 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);overscroll
   <canvas id="c"></canvas>
   <div id="hud" class="hidden">
     <div id="top">
-      <div class="cell" id="cDay"><span class="idx">01</span><div class="k">Day <span id="hDay" class="num">01</span></div>
+      <div class="cell" id="cDay"><div class="k">Day <span id="hDay" class="num">01</span></div>
         <div class="v num" id="hTime">08:00</div><div class="bar"><i id="hDayBar"></i></div></div>
-      <div class="cell cash" id="cCash"><span class="idx">02</span><div class="k">Cash</div>
-        <div class="v num" id="hCash">$0</div><div class="sub num" id="hCashSub">Goal $60</div></div>
-      <div class="cell" id="cRep"><span class="idx">03</span><div class="k">Reputation</div>
+      <div class="cell cash" id="cCash"><div class="k">Cash</div>
+        <div class="v num" id="hCash">$0</div><div class="sub num" id="hCashSub">Goal $30</div></div>
+      <div class="cell" id="cRep"><div class="k">Rep</div>
         <div class="v num" id="hRep">3.0</div><div class="stars" id="hStars"></div><div class="sub num" id="hCalm">CALM ×1.00</div></div>
-      <div class="cell" id="cBtns">
-        <button class="btn" data-ui="menu"><svg viewBox="0 0 16 16"><path d="M2 4h12M2 8h12M2 12h12" stroke="currentColor" stroke-width="2"/></svg>Menu</button>
-        <button class="btn" data-ui="recipes"><svg viewBox="0 0 16 16"><rect x="3" y="2" width="10" height="12" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M5.5 6h5M5.5 9h5" stroke="currentColor" stroke-width="1.6"/></svg>Recipes</button>
-        <button class="btn" data-ui="upgrades"><svg viewBox="0 0 16 16"><path d="M8 2l5 6H10v6H6V8H3z" fill="currentColor"/></svg>Upgrade</button>
-        <button class="btn" data-ui="cam"><svg viewBox="0 0 16 16"><rect x="1.5" y="4" width="13" height="9" rx="1" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="8" cy="8.5" r="2.4" fill="currentColor"/></svg><span id="camLbl">Auto</span></button>
-        <div id="themeRow"></div>
+      <div id="cBtns">
+        <button class="btn ib" data-ui="upgrades" aria-label="Upgrades"><svg viewBox="0 0 16 16"><path d="M8 2l5 6H10v6H6V8H3z" fill="currentColor"/></svg><span>Up</span></button>
+        <button class="btn ib" data-ui="menu" aria-label="Menu"><svg viewBox="0 0 16 16"><path d="M2 4h12M2 8h12M2 12h12" stroke="currentColor" stroke-width="2"/></svg><span>Menu</span></button>
       </div>
     </div>
-    <div id="goal"><span class="gk">GOAL</span><span id="goalTxt">Pick up beans at the pantry</span><span class="gp num" id="goalProg"></span></div>
+    <div id="goal"><div class="gl"><span class="gk" id="goalRole">GOAL</span><span id="goalTxt">Pick up beans</span><span class="gp num" id="goalProg"></span></div>
+      <div class="go hidden" id="goalObj"><span class="ok">◎</span><span id="objTxt"></span><span class="ob"><i id="objBar"></i></span><span class="num" id="objN"></span></div></div>
     <div id="plist"></div>
     <div id="orders"></div>
-    <div id="side">
+    <button id="stockChip" class="chip"></button>
+    <div id="side" class="hidden">
       <div class="rs" id="res"></div>
       <div class="rs" id="mach"></div>
     </div>
+    <span id="camLbl" class="hidden">Auto</span>
     <div id="event" class="off"></div>
     <div id="toast"></div>
   </div>
@@ -1519,6 +1557,18 @@ class Character {
     const sh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), MAT.blob); sh.rotation.x = -Math.PI / 2; sh.position.y = .015; sh.scale.setScalar(.95);
     sh.renderOrder = 1; this.root.add(sh); this.shadow = sh;
   }
+  // readability: colour outline (inverted hull) + x-ray silhouette when something stands in front.
+  // The ghost draws before the body (renderOrder 2 < 3) and only where the café is in front (GreaterDepth),
+  // so it never paints over the barista's own limbs.
+  addHighlight(color) {
+    const mk = (mat, ro) => { const m = new THREE.SkinnedMesh(this.mesh.geometry, mat); m.bind(this.mesh.skeleton, this.mesh.bindMatrix);
+      m.frustumCulled = false; m.renderOrder = ro; m.castShadow = false; m.receiveShadow = false; this.mesh.add(m); return m; };
+    const om = new THREE.MeshBasicMaterial({ color: new THREE.Color(color).lerp(new THREE.Color('#000'), .45), side: THREE.BackSide });
+    om.onBeforeCompile = (sh) => { sh.vertexShader = sh.vertexShader.replace('#include <begin_vertex>', 'vec3 transformed = vec3(position) + normal * 0.028;'); };
+    this.outline = mk(om, 3);
+    this.ghost = mk(new THREE.MeshBasicMaterial({ color, depthFunc: THREE.GreaterDepth, depthWrite: false }), 2);
+    this.mesh.renderOrder = 3;
+  }
   update(dt, speed, maxSpeed) {
     const B = this.b; this.t += dt;
     const target = clamp(speed / Math.max(.01, maxSpeed), 0, 1);
@@ -1591,7 +1641,7 @@ const PANTS = ['#2b2f36', '#4a4036', '#5f6670', '#262626', '#7b6a55', '#3c4a5e']
 function baristaLook(i) {
   const pc = PLAYER_COLORS[i];
   return { skin: SKINS[[0, 2, 1, 3][i]], hair: HAIRS[[0, 2, 4, 1][i]], shirt: '#fbfbfa', pants: '#26272a', apron: pc, hat: pc, hatBrim: shade(pc, -.25),
-    shoe: '#1d1d1d', sole: '#ffffff', w: 1, sleeve: false, scale: 1.12 };
+    shoe: '#1d1d1d', sole: '#ffffff', w: 1, sleeve: false, scale: 1.24 };
 }
 function customerLook(seed) { // deterministic from a seed, so every device builds the same guest
   const s0 = SEED; if (seed) SEED = seed;
@@ -1616,7 +1666,7 @@ const G = {
   heatMul: 1, peakMul: 1, ticket: 0, day0: null, tutorial: true, speed: QS.has('speed') ? parseFloat(QS.get('speed')) : 1,
   upg: { grind: 0, brew: 0, steam: 0, pantry: 0, tray: 0, shoes: 0 }, unlocked: new Set(), sound: true, camMode: 0,
 };
-const DAYSTAT = () => ({ served: 0, lost: 0, revenue: 0, tips: 0, perfect: 0, burnt: 0, items: 0, startRep: G.rep, startCash: G.cash, unlocks: [], spent: 0 });
+const DAYSTAT = () => ({ served: 0, lost: 0, revenue: 0, tips: 0, perfect: 0, burnt: 0, items: 0, startRep: G.rep, startCash: G.cash, unlocks: [], spent: 0, bonus: 0 });
 let DS = DAYSTAT();
 const UPG = [
   { id: 'grind', name: 'Burr Set', desc: 'Grinder +35% speed', costs: [25, 60, 120] },
@@ -1643,14 +1693,16 @@ class Player {
     this.ch.pos.set(sp[0], 0, sp[1]); this.ch.yaw = Math.PI;
     this.pile = new Pile(99, (k, v, e) => this.slot(k, v, e));
     this.vx = 0; this.vz = 0; this.ix = 0; this.iz = 0; this.xfer = 0; this.target = null; this.payT = 0; this.sway = new THREE.Vector2(); this.swayV = new THREE.Vector2();
-    this.stats = { served: 0, earned: 0, perfect: 0, paid: 0, items: 0 };
+    this.stats = { served: 0, earned: 0, perfect: 0, paid: 0, items: 0, obj: 0 };
+    this.role = null; this.obj = null; this.objK = i; this.objCool = 2;
+    this.ch.addHighlight(this.color);
     // indicators: ring under feet, floating marker, MAX tag
-    const ring = new THREE.Mesh(new THREE.RingGeometry(.42, .52, 40), new THREE.MeshBasicMaterial({ color: this.color, transparent: true, opacity: .95, depthWrite: false }));
+    const ring = new THREE.Mesh(new THREE.RingGeometry(.46, .62, 40), new THREE.MeshBasicMaterial({ color: this.color, transparent: true, opacity: .95, depthWrite: false }));
     ring.rotation.x = -Math.PI / 2; ring.position.y = .02; ring.renderOrder = 3; this.ch.root.add(ring); this.ring = ring;
-    const disc = new THREE.Mesh(new THREE.CircleGeometry(.42, 40), new THREE.MeshBasicMaterial({ color: this.color, transparent: true, opacity: .18, depthWrite: false }));
+    const disc = new THREE.Mesh(new THREE.CircleGeometry(.46, 40), new THREE.MeshBasicMaterial({ color: this.color, transparent: true, opacity: .26, depthWrite: false }));
     disc.rotation.x = -Math.PI / 2; disc.position.y = .018; disc.renderOrder = 2; this.ch.root.add(disc);
-    this.tag = makeCanvasSprite(256, 64, 1.24, (g, w, h) => {
-      const txt = (this.away ? '⏸ ' : '') + this.name.toUpperCase();
+    this.tag = makeCanvasSprite(256, 64, 1.2, (g, w, h) => {
+      const txt = this.tagTxt();
       g.font = `800 30px ${FONT}`; const tw = Math.min(w - 20, Math.max(84, g.measureText(txt).width + 34));
       g.fillStyle = this.away ? '#8a8a86' : this.color; g.beginPath(); g.roundRect((w - tw) / 2, 4, tw, h - 22, 10); g.fill();
       g.beginPath(); g.moveTo(w / 2 - 10, h - 19); g.lineTo(w / 2 + 10, h - 19); g.lineTo(w / 2, h - 6); g.fill();
@@ -1687,6 +1739,8 @@ class Player {
   }
   setName(n) { n = (n || PLAYER_NAMES[this.i]).slice(0, 10); if (n !== this.name) { this.name = n; this.tag.userData.redraw(); } }
   setAway(a) { if (a !== this.away) { this.away = a; this.tag.userData.redraw(); } }
+  isMe() { return this.i === (NET.role === 'solo' ? 0 : NET.me); }
+  tagTxt() { return (this.away ? '⏸ ' : '') + (this.isMe() ? (G.players.length > 1 ? 'YOU' : 'YOU') : this.name.toUpperCase()); }
   visuals(dt) { // stack, sway, facing, walk cycle and indicators (runs on every device)
     const c = this.ch;
     let y = 0; for (const e of this.pile.items) { e.cy = y; y += ITEM[e.t].h; }
@@ -1701,8 +1755,11 @@ class Player {
     if (spd > 2 && (c.phase % .5) < .06 && !this._fs) { this._fs = true; PFX.puff(c.pos.x, .05, c.pos.z, 1, .5); } else if ((c.phase % .5) > .1) this._fs = false;
     // indicators
     const full = this.pile.items.length >= this.cap;
-    this.tag.visible = G.players.length > 1;
-    this.tag.position.set(c.pos.x, 2.45 + Math.sin(clock.elapsedTime * 3 + this.i) * .05 + c.mesh.position.y, c.pos.z);
+    const tt = this.tagTxt(); if (tt !== this._tt) { this._tt = tt; this.tag.userData.redraw(); }
+    this.tag.visible = G.state !== 'title' && (G.players.length > 1 || this.isMe());
+    if (!this.tag.userData.s0) this.tag.userData.s0 = this.tag.scale.clone();
+    this.tag.scale.copy(this.tag.userData.s0).multiplyScalar(this.isMe() ? 1 : .8);
+    this.tag.position.set(c.pos.x, 2.7 + Math.sin(clock.elapsedTime * 3 + this.i) * .05 + c.mesh.position.y, c.pos.z);
     this.maxTag.visible = full;
     if (full) { c.handPos(_v1, y + .3); this.maxTag.position.copy(_v1); }
     this.ring.scale.setScalar(1 + Math.sin(clock.elapsedTime * 4 + this.i) * .04);
@@ -1733,7 +1790,7 @@ class Player {
     if (inZ(CASHZ) && CASHPILE.items.length) {
       const e = CASHPILE.takeTop(); CASHPILE.slot(CASHPILE.items.length, _v1);
       const pl = this;
-      FLY.add('cash', _v1, null, .32, () => { G.cash += e.v; HUD.bump('cash'); }, () => pl.ch.handPos(_v3, .2));
+      FLY.add('cash', _v1, null, .32, () => { G.cash += e.v; HUD.bump('cash'); objEvent(pl, 'cash', null, e.v); }, () => pl.ch.handPos(_v3, .2));
       SFX.coin(1.2 + rnd() * .2); this.xfer = .045; return;
     }
     // register — serve the front customer
@@ -1765,14 +1822,14 @@ class Player {
       if (e.f < 1) continue;
       if (stationAccepts(s, e.t, false)) {
         P.items.splice(i, 1); this.slot(i, _v1, e);
-        s.inputs[e.t].add(e.t, e.q, _v1); SFX.drop(); this.xfer = .1; return;
+        s.inputs[e.t].add(e.t, e.q, _v1); SFX.drop(); this.xfer = .1; objEvent(this, 'drop', e.t, 1, s.id); return;
       }
     }
     // pickup
     const slow = Math.hypot(this.vx, this.vz) < 2.2;
     if (s.out && s.out.items.length && P.items.length < this.cap && ((s.kind !== 'source' && (slow || this.dwell > .15)) || (this.dwell > .3 && slow))) {
       const e = s.out.takeTop(); s.out.slot(s.out.items.length, _v1);
-      P.add(e.t, e.q, _v1); SFX.pick(P.items.length); this.xfer = s.kind === 'source' ? .12 : .1;
+      P.add(e.t, e.q, _v1); SFX.pick(P.items.length); objEvent(this, 'pick', e.t, 1, s.id); this.xfer = s.kind === 'source' ? .12 : .1;
       if (s.kind === 'source' && s.out.items.length === 0) toast(`${ITEM[e.t].name.toUpperCase()} OUT OF STOCK — WAIT FOR DELIVERY`, 'warn');
       return;
     }
@@ -1783,7 +1840,7 @@ class Player {
     let best = null, bd = 2.4;
     for (const s of STATIONS) { if (!s.unlocked) continue; const d = Math.hypot(p.x - s.zone.x, p.z - s.zone.z); if (d < bd && stationAccepts(s, e.t, true)) { bd = d; best = s; } }
     P.takeTop(); this.pile.topPos(_v1);
-    if (best) { best.inputs[e.t].add(e.t, e.q, this.ch.handPos(_v1, .3)); SFX.drop(); }
+    if (best) { best.inputs[e.t].add(e.t, e.q, this.ch.handPos(_v1, .3)); SFX.drop(); objEvent(this, 'drop', e.t, 1, best.id); }
     else { this.ch.handPos(_v1, .3); PFX.puff(_v1.x, _v1.y, _v1.z, 8, .7); SFX.drop(); floatText(_v1.x, _v1.y + .5, _v1.z, 'BINNED', '#888'); }
   }
 }
@@ -1993,15 +2050,19 @@ class Customer {
     c.carrying = this.pile.items.length > 0 && c.sit < .5;
     c.update(dt, spd, 1.9);
     const waiting = this.state === 'walk' || this.state === 'queue';
-    const showB = waiting && this.slot >= 0 && this.slot <= 3 && this.need.length;
-    this.bubble.visible = !!showB; this.gauge.visible = waiting && this.slot >= 0 && this.slot <= 7;
+    // declutter: full bubble for the guest at the register, smaller/fainter for the next two, none beyond
+    const showB = waiting && this.slot >= 0 && this.slot <= 2 && this.need.length;
+    this.bubble.visible = !!showB; this.gauge.visible = waiting && this.slot >= 0 && this.slot <= 4;
+    const bk = this.slot <= 0 ? 1 : this.slot === 1 ? .78 : .62;
+    if (showB) { const b = this.bubble; if (!b.userData.s0) b.userData.s0 = b.scale.clone(); b.scale.copy(b.userData.s0).multiplyScalar(bk);
+      b.material.opacity = this.slot <= 0 ? 1 : DECL.bubbleA * (this.slot === 1 ? .9 : .7); }
     if (this.gauge.visible) {
       const u = this.gauge.material.uniforms, pr = this.pat;
       u.uP.value = pr; u.uCol.value.set(pr > .5 ? THEME.ui.ok : pr > .25 ? '#ffa000' : '#e2231a'); u.uTrack.value.set('#d8d8d8');
       u.uPulse.value = pr < .25 ? (Math.sin(clock.elapsedTime * 12) * .5 + .5) : 0;
-      this.gauge.position.set(p.x + (showB ? .8 : 0), 2.5 + (showB ? .35 : 0), p.z);
+      this.gauge.position.set(p.x + (showB ? .8 * bk : 0), 2.5 + (showB ? .35 * bk : 0), p.z);
     }
-    if (showB) this.bubble.position.set(p.x, 2.75, p.z);
+    if (showB) this.bubble.position.set(p.x, 2.55 + .2 * bk, p.z);
     if (this.happy > 0) this.happy -= dt;
   }
   dispose() { this.ch.dispose(); scene.remove(this.gauge); scene.remove(this.bubble); BILL.splice(BILL.indexOf(this.gauge), 1); this.bubble.material.map.dispose(); this.bubble.material.dispose(); this.gauge.material.dispose(); }
@@ -2036,6 +2097,8 @@ function customerPaid(c, p) {
   const tot = Object.values(c.credit).reduce((a, b) => a + b, 0) || 1;
   for (const k in c.credit) { const pl = G.players[k]; if (pl) pl.stats.earned += total * c.credit[k] / tot; }
   p.stats.served++; if (perf === 1) p.stats.perfect++;
+  for (const k in c.credit) { const pl = G.players[k]; if (pl) { objEvent(pl, 'serve', null, 1); if (perf === 1) objEvent(pl, 'perfect', null, 1); } }
+  objEvent(p, 'paid', null, 1);
   const dRep = .045 + .05 * perf - .12 * burnt + (c.pat > .6 ? .02 : 0);
   G.rep = clamp(G.rep + dRep, 0, 5);
   const pos = c.ch.pos;
@@ -2133,7 +2196,8 @@ const goalFor = (d) => 30 + (d - 1) * 30;
 function startDay() {
   G.t = 0; G.open = true; G.spawnT = G.day === 1 ? 3 : 2; G.nextDel = G.day === 1 ? 40 : 24; G.ev = null; G.peakMul = 1; G.heatMul = 1;
   DS = DAYSTAT(); planEvents();
-  for (const p of G.players) p.stats = { served: 0, earned: 0, perfect: 0, paid: 0, items: 0 };
+  for (const p of G.players) { p.stats = { served: 0, earned: 0, perfect: 0, paid: 0, items: 0, obj: 0 }; p.obj = null; p.objCool = 2; }
+  ROLE.assign('day');
   for (const s of STATIONS) if (s.heatOn) { s.heat = .12; s.over = 0; }
   HUD.event(null); toast(`DAY ${pad2(G.day)} — DOORS OPEN · GOAL ${fmtCash(goalFor(G.day))}`, 'acc');
   SFX.bell();
@@ -2145,7 +2209,7 @@ function endDay() {
   const swept = Math.round(CASHPILE.items.reduce((a, e) => a + (e.v || 0), 0));
   if (swept) { G.cash += swept; CASHPILE.items.length = 0; }
   const rent = rentFor(G.day); G.cash -= rent;
-  const earned = DS.revenue + DS.tips;
+  const earned = DS.revenue + DS.tips + (DS.bonus || 0);
   const goal = goalFor(G.day), met = earned >= goal;
   // one day of grace in the red; two in a row closes the café
   const red = G.cash < 0;
@@ -2181,6 +2245,7 @@ function updateGame(dt) {
   // entities
   for (const p of G.players) p.update(dt);
   separatePlayers();
+  ROLE.tick(dt);
   for (const s of STATIONS) updateStation(s, dt);
   for (let i = G.customers.length - 1; i >= 0; i--) {
     const c = G.customers[i]; c.update(dt);
@@ -2390,7 +2455,7 @@ function buildZones() {
   if (G.state !== 'play' && G.state !== 'paused') $('zones').classList.add('hidden'); else $('zones').classList.remove('hidden');
 }
 function zoneAt(x, y) { for (let i = 0; i < INPUT.zones.length; i++) { const r = INPUT.zones[i].r; if (x >= r[0] && x < r[0] + r[2] && y >= r[1] && y < r[1] + r[3]) return i; } return -1; }
-function isUI(el) { return !!(el && el.closest && el.closest('button,.card,.btn,#themeRow,.act,#title,#tut:not(.hidden),#panel:not(.hidden),#summary:not(.hidden)')); }
+function isUI(el) { return !!(el && el.closest && el.closest('button,.card,.btn,#themeRow,#side,.act,#title,#tut:not(.hidden),#panel:not(.hidden),#summary:not(.hidden)')); }
 const app = $('app');
 app.addEventListener('pointerdown', (e) => {
   AUDIO.unlock();
@@ -2594,24 +2659,33 @@ function setTheme(i) {
 // =============================================================================
 const HUD = {
   ordersDirty: true, t: 0, cashShown: 0, topFrac: .14, botFrac: .05, flashT: 0,
+  drawer: false,
   buildStatic() {
-    const tr = $('themeRow'); tr.innerHTML = '';
-    THEMES.forEach((th, i) => {
-      const b = document.createElement('button'); b.className = 'btn' + (th === THEME ? ' on' : ''); b.dataset.theme = i;
-      b.innerHTML = `${i + 1}<i style="background:${th.ui.accent}"></i>`; b.title = th.name;
-      b.addEventListener('click', (e) => { e.stopPropagation(); if (NET.role === 'client') { toast('THEME IS PICKED BY THE HOST'); return; } setTheme(i); SFX.click(); }); tr.appendChild(b);
-    });
+    const tr = $('themeRow');
+    if (tr) { tr.innerHTML = '';
+      THEMES.forEach((th, i) => {
+        const b = document.createElement('button'); b.className = 'btn' + (th === THEME ? ' on' : ''); b.dataset.theme = i;
+        b.innerHTML = `${i + 1}<i style="background:${th.ui.accent}"></i>`; b.title = th.name;
+        b.addEventListener('click', (e) => { e.stopPropagation(); if (NET.role === 'client') { toast('THEME IS PICKED BY THE HOST'); return; } setTheme(i); SFX.click(); }); tr.appendChild(b);
+      }); }
     $('hStars').innerHTML = '<b></b><b></b><b></b><b></b><b></b>';
+    const sc = $('stockChip'); if (sc && !sc._b) { sc._b = 1; sc.addEventListener('click', (e) => { e.stopPropagation(); HUD.drawer = !HUD.drawer; $('side').classList.toggle('hidden', !HUD.drawer); SFX.click(); HUD.t = 0; HUD.layout(); }); }
     this.ordersDirty = true; this.layout();
   },
   layout() {
-    const top = $('top').getBoundingClientRect(), goal = $('goal').getBoundingClientRect();
-    const y = Math.max(top.bottom, goal.bottom) + 8;
     const port = innerHeight > innerWidth;
+    const online = NET.role !== 'solo' && G.players.length > 1;
+    $('hud').classList.toggle('online', online);
+    const top = $('top').getBoundingClientRect(), goal = $('goal').getBoundingClientRect();
+    let y = Math.max(top.bottom, goal.bottom) + 5;
+    const pl = $('plist'); if (pl) { pl.style.top = y + 'px'; if (online) y += pl.getBoundingClientRect().height + 4; }
     $('orders').style.top = y + 'px';
-    $('side').style.top = y + 'px';
-    $('event').style.top = (y + (port ? 4 : 0)) + 'px';
-    $('toast').style.top = (y + 52) + 'px';
+    // stock chip: right edge — beside the orders strip in portrait, top-right corner in landscape
+    const sc = $('stockChip'), cy = port ? y : top.top;
+    sc.style.top = cy + 'px';
+    $('side').style.top = (cy + 32) + 'px';
+    $('event').style.top = (y + 36) + 'px';
+    $('toast').style.top = (y + 76) + 'px';
     if (G.state === 'title') {
       const c = $('title').querySelector('.card'); const ch = c ? c.getBoundingClientRect().height + 24 : innerHeight * .5;
       this.topFrac = .02; this.botFrac = clamp(ch / innerHeight, 0, .6);
@@ -2619,15 +2693,10 @@ const HUD = {
       if (!port) { this.topFrac = 0; this.botFrac = 0; this.leftFrac = c ? clamp((c.getBoundingClientRect().right + 8) / innerWidth, 0, .6) : .45; }
     } else {
       this.leftFrac = 0;
-      this.topFrac = clamp((y - 8) / innerHeight * .8, .05, .32);
+      // the compact HUD is translucent: only reserve part of it so the café sits a little lower
+      this.topFrac = clamp((y + 26) / innerHeight * .62, .04, .24);
       this.botFrac = .04;
     }
-    const pl = $('plist'); if (pl) { pl.style.top = (y - 4) + 'px'; }
-    const online = NET.role !== 'solo' && G.players.length > 1;
-    $('hud').classList.toggle('online', online);
-    if (online) { const ph = pl ? pl.getBoundingClientRect().height + 4 : 0; $('orders').style.top = (y + ph) + 'px'; $('side').style.top = (y + ph) + 'px'; }
-    const sideH = innerHeight - y - 60;
-    $('side').style.display = sideH < 120 && !port ? 'none' : '';
   },
   bump(k) { const el = k === 'cash' ? $('cCash') : $('cRep'); el.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.06)' }, { transform: 'scale(1)' }], { duration: 220 }); },
   flash(t) { toast(t); },
@@ -2639,7 +2708,7 @@ const HUD = {
     $('hDayBar').style.width = (clamp(G.t / G.dayLen, 0, 1) * 100).toFixed(1) + '%';
     this.cashShown = Math.abs(this.cashShown - G.cash) < 1 ? G.cash : lerp(this.cashShown, G.cash, .35);
     $('hCash').textContent = fmtCash(this.cashShown);
-    const earned = DS.revenue + DS.tips, goal = goalFor(G.day);
+    const earned = DS.revenue + DS.tips + (DS.bonus || 0), goal = goalFor(G.day);
     $('hCashSub').textContent = `TODAY ${fmtCash(earned)} / ${fmtCash(goal)}`;
     $('hRep').textContent = G.rep.toFixed(1);
     [...$('hStars').children].forEach((b, i) => b.className = G.rep >= i + .5 ? 'on' : '');
@@ -2653,22 +2722,34 @@ const HUD = {
         return `<div class="tk" data-id="${c.id}"><div class="tn"><span>#${pad2(c.id % 100)}</span><span>${c.slot === 0 ? 'AT REGISTER' : 'Q' + (c.slot + 1)}</span></div><div class="ti">${Object.keys(cnt).map(t => `<img src="${ICON_URL[t]}">${cnt[t] > 1 ? `<b style="font-size:10px">×${cnt[t]}</b>` : ''}`).join('')}</div><div class="tb"><i></i></div></div>`; }).join('');
     }
     [...O.children].forEach((el, i) => { const c = list[i]; if (!c) return; const b = el.querySelector('.tb i'); b.style.width = (c.pat * 100).toFixed(0) + '%'; b.style.background = c.pat > .5 ? THEME.ui.ok : c.pat > .25 ? '#ffa000' : '#e2231a'; el.style.borderLeftColor = c.slot === 0 ? THEME.ui.accent : THEME.ui.line; });
-    // resources
-    const small = innerHeight < 500 && !port;
-    const r = ['beans', 'cups', 'milk'].map(id => { const s = SBY[id]; return `<div><img src="${ICON_URL[s.outT]}"><span class="num" style="color:${s.out.items.length < 3 ? THEME.ui.warn : 'inherit'}">${s.out.items.length}</span></div>`; }).join('');
-    const del = LIVE.vanState.mode !== 'off' ? 'ARRIVING' : (G.ev && G.ev.type === 'supply' ? 'DELAYED ' : '') + `0:${pad2(Math.max(0, Math.ceil(G.nextDel)))}`;
-    $('res').innerHTML = `<div class="k">Pantry · stock</div><div class="rrow">${r}</div>${small ? '' : `<div class="k">Van ${del}</div>`}`;
-    let mlist = STATIONS.filter(s => s.unlocked && s.kind !== 'source');
-    if (small && mlist.length > 3) mlist = mlist.filter(s => s.busy || s.over > 0 || s.heatOn).slice(0, 3);
-    const ms = mlist.map(s => {
-      const col = s.over > 0 ? THEME.ui.warn : s.busy ? THEME.ui.accent : s.out.items.length ? THEME.ui.ok : THEME.ui.line;
-      const extra = s.heatOn ? `${Math.round(60 + s.heat * 40)}°` : s.out.items.length ? '×' + s.out.items.length : '';
-      return `<div class="mrow"><span class="dot" style="background:${col}"></span>${s.title.replace('ESPRESSO', 'ESP')}<span class="mt num">${extra}</span></div>`; }).join('');
-    $('mach').innerHTML = `<div class="k" style="margin-bottom:2px">Machines</div>${ms}`;
+    // stock chip (tap = drawer with pantry + machines)
+    const low = ['beans', 'cups', 'milk'].map(id => SBY[id]).filter(s => s.unlocked !== false && s.out.items.length < 3);
+    const hot = STATIONS.filter(s => s.unlocked && s.over > 0);
+    const sc = $('stockChip');
+    const chip = `${['beans', 'cups', 'milk'].map(id => { const s = SBY[id]; return `<img src="${ICON_URL[s.outT]}"><span class="num">${s.out.items.length}</span>`; }).join('')}${hot.length ? '<span>⚠</span>' : ''}<span class="cv">${this.drawer ? '▲' : '▼'}</span>`;
+    if (sc._h !== chip) { sc._h = chip; sc.innerHTML = chip; }
+    sc.classList.toggle('warn', low.length > 0 || hot.length > 0);
+    if (this.drawer) {
+      const r = ['beans', 'cups', 'milk'].map(id => { const s = SBY[id]; return `<div><img src="${ICON_URL[s.outT]}"><span class="num" style="color:${s.out.items.length < 3 ? THEME.ui.warn : 'inherit'}">${s.out.items.length}</span></div>`; }).join('');
+      const del = LIVE.vanState.mode !== 'off' ? 'ARRIVING' : (G.ev && G.ev.type === 'supply' ? 'DELAYED ' : '') + `0:${pad2(Math.max(0, Math.ceil(G.nextDel)))}`;
+      $('res').innerHTML = `<div class="k">Pantry · stock</div><div class="rrow">${r}</div><div class="k">Van ${del}</div>`;
+      const ms = STATIONS.filter(s => s.unlocked && s.kind !== 'source').map(s => {
+        const col = s.over > 0 ? THEME.ui.warn : s.busy ? THEME.ui.accent : s.out.items.length ? THEME.ui.ok : THEME.ui.line;
+        const extra = s.heatOn ? `${Math.round(60 + s.heat * 40)}°` : s.out.items.length ? '×' + s.out.items.length : '';
+        return `<div class="mrow"><span class="dot" style="background:${col}"></span>${s.title.replace('ESPRESSO', 'ESP')}<span class="mt num">${extra}</span></div>`; }).join('');
+      $('mach').innerHTML = `<div class="k" style="margin-bottom:2px">Machines</div>${ms}`;
+    }
     $('hCalm').textContent = `CALM ×${(1 + Math.min(G.calm, 10) * .05).toFixed(2)} · ${G.calm}`; $('hCalm').style.color = G.calm > 1 ? THEME.ui.accent : '';
     // goal
     const gl = GOAL.cur; $('goalTxt').textContent = gl ? gl.txt : '';
-    $('goalProg').textContent = `${DS.served} SERVED`;
+    const me = myPlayer(), roleOn = me && G.players.length > 1 && me.role && ROLES[me.role] && me.role !== 'all';
+    $('goalRole').textContent = roleOn ? ROLES[me.role].tag : 'GOAL';
+    $('goalRole').style.background = roleOn ? PLAYER_COLORS[me.i] : '';
+    $('goalProg').textContent = roleOn ? '' : `${DS.served} SERVED`;
+    const ob = roleOn && me.obj, go = $('goalObj');
+    go.classList.toggle('hidden', !ob);
+    if (ob) { $('objTxt').textContent = ob.txt; $('objN').textContent = `${Math.min(ob.have, ob.n)}/${ob.n}`; $('objBar').style.width = (clamp(ob.have / ob.n, 0, 1) * 100).toFixed(0) + '%'; }
+    if (this._go !== !!ob) { this._go = !!ob; this.layout(); }
     // online: one chip per barista (colour, name, score, link state) + this device's connection
     NET.hudUpdate();
     // station card refresh
@@ -2678,6 +2759,15 @@ const HUD = {
 function toast(txt, kind = '') {
   if (NET.applying) return;
   if (NET.role === 'host' && NET.inGame) NET.fx('t', [txt, kind]);
+  toastLocal(txt, kind);
+}
+// a toast for one barista only: shown here if it's us, otherwise relayed to that device
+function toastFor(p, txt, kind = '') {
+  if (!p) return;
+  if (p.i === NET.me) toastLocal(txt, kind);
+  else if (NET.role === 'host' && NET.inGame) NET.fx('t', [txt, kind], p.i);
+}
+function toastLocal(txt, kind = '') {
   const T = $('toast'); if (T.children.length > 2) T.firstChild.remove();
   const d = document.createElement('div'); d.className = 'toast'; d.textContent = txt;
   if (kind === 'warn') d.style.background = THEME.ui.warn; if (kind === 'acc') { d.style.background = THEME.ui.accent; d.style.color = THEME.ui.accentFg; }
@@ -2703,8 +2793,8 @@ function chainGoal(t, p, depth) {
   }
   return { txt: `${s.title} ready`, t: s.zone };
 }
-function computeGoal() {
-  const p = myPlayer(); if (!p) return null;
+function soloGoal(p) {
+  if (!p) return null;
   if (!G.open && !G.queue.length) return { txt: 'Closing up — last guests finishing', t: null };
   if (CASHPILE.items.length >= 4 || (CASHPILE.items.length && !G.queue.length)) return { txt: 'Collect the cash at the tray', t: CASHZ };
   const pad = PADS.find(u => u.visible && !u.done && G.cash + .01 >= (u.cost - u.paid));
@@ -2778,10 +2868,13 @@ const UI = {
         <div class="seg" style="grid-template-columns:1fr 1fr"><button class="btn ${G.mode === 'coop' ? 'on' : ''}" data-mode="coop" ${host ? '' : 'disabled'}>Co-op</button><button class="btn ${G.mode === 'versus' ? 'on' : ''}" data-mode="versus" ${host ? '' : 'disabled'}>Versus</button></div>
         <div class="lbl"><span class="ix">${on ? '03' : '02'}</span><span class="k">Design language ${host ? '' : '· set by host'}</span></div>
         <div class="seg" style="grid-template-columns:repeat(4,1fr)">${THEMES.map((th, i) => `<button class="btn ${th === THEME ? 'on' : ''}" data-th="${i}" ${host ? '' : 'disabled'}>${i + 1} ${th.short}</button>`).join('')}</div>
-        <div class="seg" style="grid-template-columns:1fr 1fr 1fr;margin-top:12px"><button class="btn" data-how>How to play</button><button class="btn" data-sound>Sound ${G.sound ? 'on' : 'off'}</button><button class="btn" data-quit>${on ? 'Leave room' : 'Quit to title'}</button></div>
+        <div class="seg" style="grid-template-columns:1fr 1fr;margin-top:12px"><button class="btn" data-rec>Recipes</button><button class="btn" data-cam>Camera · ${CAM_MODES[G.camMode]}</button></div>
+        <div class="seg" style="grid-template-columns:1fr 1fr 1fr;margin-top:6px"><button class="btn" data-how>How to play</button><button class="btn" data-sound>Sound ${G.sound ? 'on' : 'off'}</button><button class="btn" data-quit>${on ? 'Leave room' : 'Quit to title'}</button></div>
         ${close}</div>`;
       P.querySelectorAll('[data-mode]').forEach(b => b.onclick = () => { if (!host) return; G.mode = b.dataset.mode; NET.broadcastMode(); this.open('menu'); });
       P.querySelectorAll('[data-th]').forEach(b => b.onclick = () => { if (!host) return; setTheme(+b.dataset.th); this.open('menu'); });
+      P.querySelector('[data-rec]').onclick = () => this.open('recipes');
+      P.querySelector('[data-cam]').onclick = () => { this.cycleCam(); this.open('menu'); };
       P.querySelector('[data-how]').onclick = () => { P.classList.add('hidden'); TUT.open(() => { if (G.state === 'paused') G.state = 'play'; }); };
       P.querySelector('[data-sound]').onclick = () => { G.sound = !G.sound; if (AUDIO.master) AUDIO.master.gain.value = G.sound ? .5 : 0; this.open('menu'); };
       P.querySelector('[data-quit]').onclick = () => { P.classList.add('hidden'); NET.leave(); toTitle(); };
@@ -2842,10 +2935,10 @@ const UI = {
         <div class="sbox"><div class="k">Best calm streak</div><div class="v num">×${G.calmBest}</div></div>
       </div>
       <table class="ptab"><tr><th>Ledger · opened with ${fmtCash(DS.startCash)}</th><th></th></tr>
-        <tr><td>Sales</td><td class="num">${fmtCash(DS.revenue)}</td></tr><tr><td>Tips (no-rush bonus)</td><td class="num">${fmtCash(DS.tips)}</td></tr>
+        <tr><td>Sales</td><td class="num">${fmtCash(DS.revenue)}</td></tr><tr><td>Tips (no-rush bonus)</td><td class="num">${fmtCash(DS.tips)}</td></tr>${DS.bonus ? `<tr><td>Personal goal rewards</td><td class="num">${fmtCash(DS.bonus)}</td></tr>` : ''}
         ${DS.spent ? `<tr><td>Builds &amp; upgrades</td><td class="num">−${fmtCash(DS.spent)}</td></tr>` : ''}<tr><td>Rent</td><td class="num">−${fmtCash(o.rent)}</td></tr>${trayV ? `<tr><td style="color:var(--mute)">incl. swept from the tray at close</td><td class="num" style="color:var(--mute)">${fmtCash(trayV)}</td></tr>` : ''}<tr><td><b>Cash in the drawer</b></td><td class="num"><b>${fmtCash(G.cash)}</b></td></tr></table>
-      ${G.players.length > 1 ? `<table class="ptab"><tr><th>Barista</th><th>Served</th><th>Perfect</th><th>Earned</th><th>Invested</th></tr>
-        ${ps.map(p => `<tr><td><i style="background:${p.color}"></i><b>${esc(p.name)}</b>${winner === p ? ' ★ MVP' : ''}</td><td class="num">${p.stats.served}</td><td class="num">${p.stats.perfect}</td><td class="num">${fmtCash(p.stats.earned)}</td><td class="num">${fmtCash(p.stats.paid)}</td></tr>`).join('')}</table>` : ''}
+      ${G.players.length > 1 ? `<table class="ptab"><tr><th>Barista</th><th>Served</th><th>Perfect</th><th>Goals</th><th>Earned</th><th>Invested</th></tr>
+        ${ps.map(p => `<tr><td><i style="background:${p.color}"></i><b>${esc(p.name)}</b>${winner === p ? ' ★ MVP' : ''}</td><td class="num">${p.stats.served}</td><td class="num">${p.stats.perfect}</td><td class="num">${p.stats.obj || 0}</td><td class="num">${fmtCash(p.stats.earned)}</td><td class="num">${fmtCash(p.stats.paid)}</td></tr>`).join('')}</table>` : ''}
       ${DS.unlocks.length ? `<div class="k" style="margin-top:10px">Built today: ${DS.unlocks.join(' · ')}</div>` : ''}
       ${o.red && !o.over ? `<div class="k" style="margin-top:10px;color:var(--warn)">In the red — clear the debt tomorrow or the café closes</div>` : ''}
       <div class="k" style="margin-top:10px;text-transform:none">Tomorrow: goal ${fmtCash(goalFor(G.day + 1))} · rent ${fmtCash(rentFor(G.day + 1))}${G.day + 1 >= 2 ? ' · events: peak hours, heat, supply delays' : ''}</div>
@@ -2925,7 +3018,7 @@ Object.assign(NET, {
   sendOn(c, m) { if (c && c.open && !c._dead) { try { c.send(m); return true; } catch (e) {} } return false; },
   sendRel(m) { if (this.role === 'host') { for (const s of this.slots) if (!s.host) this.sendOn(s.conn, m); } else if (this.role === 'client') this.sendOn(this.conn, m); },
   sendFast(m) { if (this.role === 'client') { if (!this.sendOn(this.uconn, m)) this.sendOn(this.conn, m); } },
-  fx(type, args) { if (this.fxq.length < 80) this.fxq.push([type, args]); },
+  fx(type, args, to) { if (this.fxq.length < 80) this.fxq.push(to === undefined ? [type, args] : [type, args, to]); },
 
   // ---------------------------------------------------------------- local actions (routed to host when you are a guest)
   action() { const p = myPlayer(); if (!p) return; if (this.role === 'client') { this.sendRel({ k: 'a' }); if (!p.pile.items.length) HUD.flash('Hands empty'); } else p.action(); },
@@ -3033,8 +3126,8 @@ Object.assign(NET, {
     return { k: 's', n: ++this.seq,
       g: [G.state === 'paused' ? 'play' : G.state, G.day, r2(G.t), G.open ? 1 : 0, r2(G.cash), r2(G.rep), G.calm, G.calmBest, G.mode, G.ev ? G.ev.type : 0, r2(G.evT || 0), r2(G.nextDel)],
       u: UPG.map(u => G.upg[u.id]), ul: [...G.unlocked],
-      ds: [DS.served, DS.lost, DS.revenue, DS.tips, DS.perfect, DS.spent, r2(DS.startCash), r2(DS.startRep)],
-      p: G.players.map(p => [r2(p.ch.pos.x), r2(p.ch.pos.z), r2(p.ch.yaw), p.pile.items.map(encI), p.name, p.away ? 1 : 0, p.stats.served, r2(p.stats.earned), p.stats.perfect, Math.round(p.stats.paid)]),
+      ds: [DS.served, DS.lost, DS.revenue, DS.tips, DS.perfect, DS.spent, r2(DS.startCash), r2(DS.startRep), r2(DS.bonus || 0)],
+      p: G.players.map(p => [r2(p.ch.pos.x), r2(p.ch.pos.z), r2(p.ch.yaw), p.pile.items.map(encI), p.name, p.away ? 1 : 0, p.stats.served, r2(p.stats.earned), p.stats.perfect, Math.round(p.stats.paid), p.role || '', p.obj ? p.obj.txt : '', p.obj ? r2(p.obj.have) : 0, p.obj ? p.obj.n : 0, p.stats.obj || 0]),
       c: G.customers.map(c => [c.id, c.seed, r2(c.ch.pos.x), r2(c.ch.pos.z), r2(c.ch.yaw), c.state, c.slot, c.need.map(t => ITEM_KEYS.indexOf(t)), r2(c.pat), c.pile.items.map(encI)]),
       q: G.queue.map(c => c.id),
       s: STATIONS.map(s => [s.busy ? 1 : 0, r2(s.prog || 0), r2(s.heat || 0), r2(s.over || 0), s.state || '', Object.keys(s.inputs).map(k => s.inputs[k].items.map(encI)), s.out ? s.out.items.map(encI) : []]),
@@ -3177,12 +3270,13 @@ Object.assign(NET, {
       for (const id of m.ul) if (!G.unlocked.has(id)) { const u = PADS.find(x => x.id === id); if (u) unlock(u, null, !this.synced); }
       PADS.forEach((u, i) => { if (!u.done) u.paid = m.pd[i] || 0; });
       refreshPads();
-      Object.assign(DS, { served: m.ds[0], lost: m.ds[1], revenue: m.ds[2], tips: m.ds[3], perfect: m.ds[4], spent: m.ds[5], startCash: m.ds[6], startRep: m.ds[7] });
+      Object.assign(DS, { served: m.ds[0], lost: m.ds[1], revenue: m.ds[2], tips: m.ds[3], perfect: m.ds[4], spent: m.ds[5], startCash: m.ds[6], startRep: m.ds[7], bonus: m.ds[8] || 0 });
       // baristas
       m.p.forEach((a, i) => {
         let p = G.players[i]; if (!p) { p = new Player(i, a[4]); G.players.push(p); G.nPlayers = G.players.length; HUD.layout(); }
         p.setName(a[4]); p.setAway(!!a[5]);
         p.stats.served = a[6]; p.stats.earned = a[7]; p.stats.perfect = a[8]; p.stats.paid = a[9];
+        p.role = a[10] || null; p.obj = a[11] ? { txt: a[11], have: a[12], n: a[13] } : null; p.stats.obj = a[14] || 0;
         this.pushSample(p, a[0], a[1], a[2]);
         if (!this.synced || i !== this.me) { if (!p.ns || p.ns.length <= 1 || !this.synced) { p.ch.pos.x = a[0]; p.ch.pos.z = a[1]; p.ch.yaw = a[2]; } }
         const px = p.ch.pos.x, pz = p.ch.pos.z;
@@ -3220,7 +3314,8 @@ Object.assign(NET, {
     this.synced = true;
   },
   playFx(f) {
-    const [t, a] = f;
+    const [t, a, to] = f;
+    if (to !== undefined && to !== this.me) return; // targeted at another barista
     try {
       if (t === 't') toast(a[0], a[1]);
       else if (t === 'f') floatText(a[0], a[1], a[2], a[3], a[4], a[5]);
@@ -3427,7 +3522,9 @@ const TUT = {
         a: `<div class="tpad"><b>$30</b><small>UNLOCK · MILK STEAMER</small></div>` },
       { k: 'No rush', t: 'Calm pays better', d: 'Perfect shots, short waits and no burnt coffee build a CALM streak — each step adds +5% tips. Rushing breaks it.',
         a: `<div class="tcalm"><span class="k">CALM</span><b>×1.25</b><div class="tbar">${'<i></i>'.repeat(5)}${'<i class="off"></i>'.repeat(5)}</div></div>` },
-      { k: 'Play', t: 'Themes & friends', d: 'Switch the design language anytime with 1–4. Host online and share the 5-letter code: up to 4 baristas, one phone each.',
+      { k: 'Team', t: 'Your role, your goals', d: 'Online, the host gives every barista a role — Bean runner, Barista, Milk or Front — that rotates each day and shifts when the café needs it. The black bar up top is YOUR next step; finish your personal goal for bonus cash and rep.',
+        a: `<div class="troles">${[['RUNNER', 'Deliver 5 beans', .6], ['BARISTA', 'Pull 3 shots', .33], ['MILK', 'Load 3 milk', 1], ['FRONT', 'Serve 3 guests', .66]].map((r, i) => `<div><b style="background:${PLAYER_COLORS[i]}">${r[0]}</b><span>${r[1]}</span><i><u style="width:${r[2] * 100}%"></u></i></div>`).join('')}</div>` },
+      { k: 'Play', t: 'Themes & friends', d: 'Switch the design language in the Menu (or keys 1–4). Host online and share the 5-letter code: up to 4 baristas, one phone each.',
         a: `<div class="tthemes">${THEMES.map((th, i) => `<div style="background:${th.ui.bg || '#fff'};border-color:${th.ui.line || '#ccc'}"><i style="background:${th.ui.accent}"></i><span style="color:${th.ui.fg || '#111'}">${i + 1}</span></div>`).join('')}</div><div class="tplayers">${PLAYER_COLORS.map(c => `<i style="background:${c}"></i>`).join('')}</div>` },
     ];
   },
@@ -3465,6 +3562,216 @@ const TUT = {
   },
 };
 window.addEventListener('keydown', (e) => { if (TUT.open_) { TUT.key(e); e.stopImmediatePropagation(); } }, true);
+
+// =============================================================================
+// 27  TEAM ROLES + PERSONAL GOALS (online) — host-authoritative, synced in snapshots
+// =============================================================================
+const ROLES = {
+  all: { tag: 'GOAL', name: 'Barista' },
+  bar: { tag: 'BAR', name: 'Bar · beans → espresso' },
+  runner: { tag: 'RUNNER', name: 'Bean runner' },
+  barista: { tag: 'BARISTA', name: 'Barista · espresso' },
+  milk: { tag: 'MILK', name: 'Milk & extras' },
+  front: { tag: 'FRONT', name: 'Front of house' },
+};
+const OBJ_T = {
+  runner: [
+    { txt: n => `Deliver ${n} beans to the grinder`, ev: 'drop', t: 'beans', n: 5 },
+    { txt: n => `Stock ${n} cups at espresso`, ev: 'drop', t: 'cup', n: 4 },
+  ],
+  barista: [
+    { txt: n => `Load ${n} grounds into espresso`, ev: 'drop', t: 'grounds', n: 4 },
+    { txt: n => `Pull ${n} espresso shots`, ev: 'pick', t: 'espresso', n: 3 },
+  ],
+  milk: [
+    { txt: n => `Load ${n} milk into the steamer`, ev: 'drop', t: 'milk', n: 3, need: ['steamer'] },
+    { txt: n => `Feed ${n} espresso to steamer/water`, ev: 'drop', t: 'espresso', n: 2, need: ['steamer', 'water'] },
+    { txt: n => `Pick up ${n} croissants`, ev: 'pick', t: 'croissant', n: 2, need: ['pastry'] },
+    { txt: n => `Help serve ${n} guests`, ev: 'serve', n: 2 },
+  ],
+  front: [
+    { txt: n => `Serve ${n} guests`, ev: 'paid', n: 3 },
+    { txt: n => `Collect $${n} from the tray`, ev: 'cash', n: 20, cash: true },
+    { txt: n => `Serve ${n} perfect orders`, ev: 'perfect', n: 2 },
+  ],
+};
+OBJ_T.bar = [OBJ_T.runner[0], OBJ_T.barista[0], OBJ_T.runner[1], OBJ_T.barista[1]];
+const ROLE = {
+  t: 0, boost: false,
+  active() { return NET.role === 'host' && G.players.length > 1; },
+  desired() {
+    const act = G.players.filter(p => !p.away), n = act.length;
+    const milkOn = ['steamer', 'water', 'pastry'].some(id => G.unlocked.has(id));
+    const set = n <= 1 ? ['all'] : n === 2 ? ['bar', 'front'] : n === 3 ? ['runner', 'barista', 'front'] : ['runner', 'barista', milkOn ? 'milk' : 'front', 'front'];
+    // adapt to what the café needs (with hysteresis so roles don't flicker)
+    const q = G.queue.filter(c => c.state === 'queue' || c.state === 'walk').length;
+    const g = SBY.grinder, stocked = g.out.items.length + g.inputs.beans.items.length >= 3;
+    let why = '';
+    if (n >= 3) {
+      if (!this.boost && q >= 6 && stocked) this.boost = true; else if (this.boost && (q <= 3 || !stocked)) this.boost = false;
+      if (this.boost) { set[set.indexOf('runner')] = 'front'; why = 'the queue is long'; }
+      else if (n >= 4 && q <= 1 && !stocked && set.filter(r => r === 'front').length > 1) { set[set.lastIndexOf('front')] = 'runner'; why = 'the grinder is running low'; }
+    }
+    const off = (G.day - 1) % Math.max(1, n), out = new Map();
+    act.forEach((p, k) => out.set(p, set[(k + off) % n]));
+    return { out, why };
+  },
+  assign(reason) {
+    if (!this.active()) { if (G.players.length <= 1) for (const p of G.players) { p.role = null; p.obj = null; } return; }
+    const { out, why } = this.desired();
+    for (const [p, r] of out) {
+      if (p.role === r) continue;
+      const first = !p.role || reason === 'day';
+      p.role = r; p.obj = null; p.objCool = first ? 2 : 1.5;
+      toastFor(p, first ? `YOUR ROLE TODAY — ${ROLES[r].name.toUpperCase()}` : `ROLE SWAP — ${ROLES[r].name.toUpperCase()} · ${why || 'team rebalanced'}`, 'acc');
+    }
+  },
+  templates(role) {
+    const l = (OBJ_T[role] || OBJ_T.front).filter(tp => !tp.need || tp.need.some(id => SBY[id] && SBY[id].unlocked));
+    return l.length ? l : OBJ_T.front;
+  },
+  newObj(p) {
+    const list = this.templates(p.role), tp = list[p.objK++ % list.length];
+    const n = tp.cash ? tp.n + 10 * (G.day - 1) : tp.n + Math.floor((G.day - 1) / 2);
+    p.obj = { txt: tp.txt(n), ev: tp.ev, it: tp.t || null, have: 0, n };
+    toastFor(p, `NEW GOAL — ${p.obj.txt.toUpperCase()}`);
+  },
+  tick(dt) {
+    if (!this.active()) return;
+    this.t -= dt; if (this.t <= 0) { this.t = 4; this.assign('adapt'); }
+    for (const p of G.players) {
+      if (p.away || !p.role || p.obj) continue;
+      p.objCool -= dt; if (p.objCool <= 0 && G.open) this.newObj(p);
+    }
+  },
+};
+function objEvent(p, ev, t, amt = 1) {
+  if (!p || !p.obj || !p.obj.ev || !ROLE.active()) return;
+  const o = p.obj; if (o.ev !== ev || (o.it && o.it !== t)) return;
+  o.have += amt; if (o.have + 1e-6 < o.n) return;
+  const cash = 3 + G.day * 2;
+  G.cash += cash; DS.bonus = (DS.bonus || 0) + cash; p.stats.earned += cash; p.stats.obj = (p.stats.obj || 0) + 1;
+  G.rep = clamp(G.rep + .04, 0, 5);
+  const h = p.ch.pos; floatText(h.x, 3.3, h.z, `GOAL ✓ +${fmtCash(cash)}`, p.color, true);
+  toastFor(p, `GOAL DONE — ${o.txt.toUpperCase()} · +${fmtCash(cash)} · REP +0.04`, 'acc');
+  SFX.coin(1.6);
+  p.obj = null; p.objCool = 2.5; HUD.bump('cash');
+}
+
+// ---- per-role guidance: each device computes its own next step from the synced role + café state
+const espList = () => ['esp1', 'esp2'].map(id => SBY[id]).filter(s => s && s.unlocked);
+function wantCount(t) { return G.queue.reduce((a, c) => a + c.need.filter(x => x === t).length, 0); }
+const drop = (it, s) => ({ txt: `Drop ${ITEM[it].name.toUpperCase()} at the ${s.title}`, t: s.zone });
+function goalRunner(p) {
+  const g = SBY.grinder, B = SBY.beans, C = SBY.cups;
+  if (g.inputs.beans.items.length < 3 && g.out.items.length < 4) {
+    if (p.pile.count('beans')) return drop('beans', g);
+    if (B.out.items.length) return { txt: 'Grab BEANS — keep the grinder fed', t: B.zone };
+  }
+  for (const s of espList()) if (s.inputs.cup.items.length < 2) {
+    if (p.pile.count('cup')) return drop('cup', s);
+    if (C.out.items.length) return { txt: 'Grab CUPS for the espresso bar', t: C.zone };
+  }
+  if (p.pile.count('beans')) return drop('beans', g);
+  const e = espList()[0]; if (p.pile.count('cup') && e) return drop('cup', e);
+  return null;
+}
+function goalCups(p) { // light prep for a quiet front counter
+  for (const s of espList()) if (s.inputs.cup.items.length < 3) {
+    if (p.pile.count('cup')) return drop('cup', s);
+    if (SBY.cups.out.items.length) return { txt: 'Quiet counter — stock CUPS at espresso', t: SBY.cups.zone };
+  }
+  return null;
+}
+function goalBarista(p) {
+  const E = espList();
+  for (const s of E) if (s.over <= 0 && s.inputs.grounds.items.length < 2) {
+    if (p.pile.count('grounds')) return { txt: `Load GROUNDS into the ${s.title}`, t: s.zone };
+    if (SBY.grinder.out.items.length) return { txt: 'Pick up GROUNDS at the GRINDER', t: SBY.grinder.zone };
+  }
+  for (const id of ['steamer', 'water']) {
+    const s = SBY[id]; if (!s.unlocked || !demandFor(s.outT) || s.inputs.espresso.items.length) continue;
+    if (p.pile.count('espresso')) return drop('espresso', s);
+    const src = E.find(x => x.out.count('espresso')); if (src) return { txt: `Pick up ESPRESSO for the ${s.title}`, t: src.zone };
+  }
+  if (wantCount('espresso')) { const src = E.find(x => x.out.count('espresso')); if (src && !p.pile.count('espresso')) return { txt: `Pick up ESPRESSO at the ${src.title}`, t: src.zone }; }
+  if (p.pile.count('grounds') && E[0]) return { txt: `Load GROUNDS into the ${E[0].title}`, t: E[0].zone };
+  const hot = E.find(s => s.over > 0); if (hot) return { txt: `${hot.title} cooling down — breathe`, t: hot.zone };
+  const g = SBY.grinder;
+  if (g.busy || g.inputs.beans.items.length) return { txt: 'Stand by the GRINDER — grounds coming', t: g.zone };
+  return null;
+}
+function goalMilk(p) {
+  const st = SBY.steamer, w = SBY.water, E = espList();
+  for (const s of [st, w]) {
+    if (!s.unlocked) continue;
+    if (s === st && st.inputs.milk.items.length < 2) {
+      if (p.pile.count('milk')) return drop('milk', st);
+      if (SBY.milk.out.items.length) return { txt: 'Grab MILK for the steamer', t: SBY.milk.zone };
+    }
+    if (demandFor(s.outT) && s.inputs.espresso.items.length < 1) {
+      if (p.pile.count('espresso')) return drop('espresso', s);
+      const src = E.find(x => x.out.count('espresso')); if (src) return { txt: `Pick up ESPRESSO for the ${s.title}`, t: src.zone };
+    }
+    if (wantCount(s.outT) && s.out.items.length && !p.pile.count(s.outT)) return { txt: `Pick up ${ITEM[s.outT].name.toUpperCase()} at the ${s.title}`, t: s.zone };
+  }
+  const pc = SBY.pastry; if (pc && pc.unlocked && wantCount('croissant') && pc.out.items.length && !p.pile.count('croissant')) return { txt: 'Pick up a CROISSANT at the PASTRY case', t: pc.zone };
+  return null;
+}
+function goalFront(p) {
+  if (CASHPILE.items.length >= 3 || (CASHPILE.items.length && !G.queue.length)) return { txt: 'Collect the cash at the tray', t: CASHZ };
+  const pad = PADS.find(u => u.visible && !u.done && G.cash + .01 >= (u.cost - u.paid));
+  if (pad && (!G.queue.length || G.queue[0].pat > .5)) return { txt: `Stand on the pad — unlock ${pad.name}`, t: { x: pad.x, z: pad.z } };
+  const c = G.queue.find(c => c.state === 'queue' || c.state === 'walk' || c.state === 'arrive');
+  if (c) {
+    const mine = c.need.find(t => p.pile.count(t)); if (mine) return { txt: `Serve ${ITEM[mine].name.toUpperCase()} at the REGISTER`, t: REGISTER };
+    for (const t of c.need) for (const id of producerOf(t)) { const s = SBY[id]; if (s && s.unlocked && s.out.count(t)) return { txt: `Pick up ${ITEM[t].name.toUpperCase()} at the ${s.title}`, t: s.zone }; }
+  }
+  if (CASHPILE.items.length) return { txt: 'Collect the cash at the tray', t: CASHZ };
+  if (c) return { txt: 'Hold the REGISTER — drinks are coming', t: REGISTER };
+  return null;
+}
+const ROLE_GOAL = {
+  bar: p => goalRunner(p) || goalBarista(p),
+  runner: goalRunner, barista: goalBarista, milk: goalMilk,
+  front: p => goalFront(p) || (G.players.filter(q => !q.away).length === 2 ? goalMilk(p) : null) || goalCups(p),
+};
+function computeGoalFor(p) {
+  if (!p) return null;
+  if (G.players.length <= 1 || !p.role || !ROLE_GOAL[p.role]) return soloGoal(p);
+  if (!G.open && !G.queue.length) return { txt: 'Closing up — last guests finishing', t: null };
+  let g = ROLE_GOAL[p.role](p);
+  if (!g) { g = soloGoal(p); if (g && g.t) g = { txt: 'Help out: ' + g.txt.charAt(0).toLowerCase() + g.txt.slice(1), t: g.t }; }
+  return g;
+}
+function computeGoal() { return computeGoalFor(myPlayer()); }
+
+// =============================================================================
+// 28  DECLUTTER — labels, gauges and bubbles only when they matter to *you*
+// =============================================================================
+const DECL = {
+  bubbleA: 1,
+  update(dt) {
+    const me = myPlayer(), title = G.state === 'title';
+    const role = me && G.players.length > 1 ? me.role : null;
+    this.bubbleA = role && role !== 'front' && role !== 'all' ? .55 : 1;
+    const gt = GOAL.cur && GOAL.cur.t;
+    for (const s of STATIONS) {
+      if (!s.unlocked) continue;
+      const d = me ? Math.hypot(me.ch.pos.x - s.zone.x, me.ch.pos.z - s.zone.z) : 99;
+      const near = d < 3.3, goal = gt === s.zone;
+      const wantL = title || ((near || goal) && d > 1.25) ? 1 : 0; // standing at it: you know what it is, keep your barista clear
+      s.labelA = damp(s.labelA ?? 1, wantL, 8, dt);
+      s.label.material.opacity = s.labelA; s.label.visible = s.labelA > .03;
+      if (s.gauge) {
+        const busy = s.busy || s.over > 0 || s.state === 'HEATING' || (s.kind !== 'source' && s.out.items.length > 0) || (s.kind === 'source' && s.out.items.length < 3);
+        const wantG = title || near || goal || busy ? 1 : 0;
+        s.gaugeA = damp(s.gaugeA ?? 1, wantG, 8, dt);
+        s.gauge.material.uniforms.uA.value = s.gaugeA;
+      }
+    }
+  },
+};
 
 // =============================================================================
 // 26  RUN LIFECYCLE
@@ -3582,6 +3889,7 @@ function frame() {
     G.t = G.dayLen * .42;
   }
   updateGoal(rdt);
+  DECL.update(rdt);
   updateCamera(rdt);
   updateVisuals(dt);
   if (G.state !== 'title') HUD.update(rdt);
@@ -3625,7 +3933,7 @@ toTitle();
 requestAnimationFrame(() => { $('fade').style.opacity = 0; });
 frame();
 // test / debug hook (harmless in production)
-window.__nrcc = { NET, TUT, G, STATIONS, SBY, PADS, CAM, UI, INPUT, CASHPILE, newGame, setTheme, endDay, toTitle, buyUpgrade, renderer, scene, PERF, THEMES,
+window.__nrcc = { NET, TUT, G, ROLE, objEvent, DS: () => DS, STATIONS, SBY, PADS, CAM, UI, INPUT, CASHPILE, newGame, setTheme, endDay, toTitle, buyUpgrade, renderer, scene, PERF, THEMES,
   give: (n) => { G.cash += n; }, camera,
   proj: (x, y, z) => { const v = new THREE.Vector3(x, y, z).project(camera); return [(v.x + 1) / 2 * innerWidth, (1 - v.y) / 2 * innerHeight]; },
   state: () => ({ st: G.state, day: G.day, t: +G.t.toFixed(1), cash: +G.cash.toFixed(1), rep: +G.rep.toFixed(2), served: DS.served, lost: DS.lost, queue: G.queue.length, tray: CASHPILE.items.length,
